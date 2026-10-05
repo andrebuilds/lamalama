@@ -1,0 +1,138 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Shared by both jobs. Only DATABASE_URL points somewhere real (the Postgres
+# service container below); everything else is a placeholder that passes env
+# validation. Tests never contact Google, GitHub, Resend, Anthropic or Neon;
+# storage tests run against the local S3 server below.
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/lamalama
+  DATABASE_URL_UNPOOLED: postgresql://postgres:postgres@localhost:5432/lamalama
+  BETTER_AUTH_SECRET: ci-only-4f9c2a7e1b8d3c6f0a5e9b2d7c1f4a8e
+  BETTER_AUTH_URL: http://localhost:3100
+  GOOGLE_CLIENT_ID: ci
+  GOOGLE_CLIENT_SECRET: ci
+  GITHUB_CLIENT_ID: ci
+  GITHUB_CLIENT_SECRET: ci
+  RESEND_API_KEY: re_ci
+  EMAIL_FROM: LamaLama <ci@example.com>
+  AI_TEXT_PROVIDER: anthropic
+  AI_TEXT_MODEL: ci
+  ANTHROPIC_API_KEY: sk-ant-ci
+  AI_VISION: "off"
+  # Storage: a local SeaweedFS S3 server started in each job (open source,
+  # no account). Dummy credentials from .github/s3-ci.json.
+  AWS_ACCESS_KEY_ID: ci-access
+  AWS_SECRET_ACCESS_KEY: ci-secret-key
+  AWS_ENDPOINT_URL_S3: http://localhost:8333
+  AWS_REGION: us-east-1
+  STORAGE_TESTS: "1"
+  NEXT_PUBLIC_APP_URL: http://localhost:3100
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lamalama
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Exports render in Chrome Headless Shell, which Remotion downloads on
+      # first use (~190 MB); restored after npm ci, which clears node_modules.
+      - name: Cache Remotion's headless browser
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.remotion
+          key: remotion-browser-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: remotion-browser-${{ runner.os }}-
+      - name: Start S3 server (SeaweedFS)
+        run: |
+          docker run -d --name s3 -p 8333:8333 \
+            -v "$PWD/.github/s3-ci.json:/etc/seaweedfs/s3.json:ro" \
+            chrislusf/seaweedfs:4.47 server -dir=/data -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
+          for i in $(seq 1 60); do
+            curl -s -o /dev/null http://localhost:8333 && break
+            sleep 1
+          done
+      - run: npm run storage:cors -- --create-bucket
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npx prettier --check "src/**/*.{ts,tsx}"
+      # Fresh database: apply every migration exactly as production would.
+      - run: npx prisma migrate deploy
+      # The export render test runs headless Chrome: its system libraries.
+      - run: npx playwright install-deps chromium
+      # Includes the database tests (they run whenever DATABASE_URL is set).
+      - run: npm test
+      - run: npm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lamalama
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Exports render in Chrome Headless Shell, which Remotion downloads on
+      # first use (~190 MB); restored after npm ci, which clears node_modules.
+      - name: Cache Remotion's headless browser
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.remotion
+          key: remotion-browser-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: remotion-browser-${{ runner.os }}-
+      - name: Start S3 server (SeaweedFS)
+        run: |
+          docker run -d --name s3 -p 8333:8333 \
+            -v "$PWD/.github/s3-ci.json:/etc/seaweedfs/s3.json:ro" \
+            chrislusf/seaweedfs:4.47 server -dir=/data -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
+          for i in $(seq 1 60); do
+            curl -s -o /dev/null http://localhost:8333 && break
+            sleep 1
+          done
+      - run: npm run storage:cors -- --create-bucket
+      - run: npx playwright install --with-deps chromium
+      - run: npx prisma migrate deploy
+      # Includes the signed-in tests (fixture creates users in this database).
+      # Playwright starts the app and the job worker.
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

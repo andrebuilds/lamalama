@@ -1,0 +1,422 @@
+// Each slice adds its own models in its own migration (M0: auth, workspaces;
+// M1: brand kits, rate limit buckets; M2: footage; M4: projects).
+// Models are PascalCase; tables are lowercase plurals via @@map.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/shared/db/generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum MemberRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+// ─── Better Auth core tables ────────────────────────────────────────────────
+// Field names follow Better Auth's schema; verify with `npx auth@latest
+// generate` whenever the auth config or plugins change.
+
+model User {
+  id            String   @id
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  role          UserRole @default(USER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions          Session[]
+  accounts          Account[]
+  memberships       Membership[]
+  personalWorkspace Workspace?   @relation("PersonalWorkspace")
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+// Better Auth rate limiting (storage: "database").
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("rate_limits")
+}
+
+// ─── Workspaces ─────────────────────────────────────────────────────────────
+
+model Workspace {
+  id              String   @id @default(cuid())
+  name            String
+  // Set on a user's personal workspace. Unique: at most one per user, even
+  // when two requests create it at once. Deleted with the user.
+  personalOwnerId String?  @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  personalOwner User?        @relation("PersonalWorkspace", fields: [personalOwnerId], references: [id], onDelete: Cascade)
+  memberships   Membership[]
+  brandKits     BrandKit[]
+  footage       Footage[]
+  projects      Project[]
+  exports       Export[]
+  shareLinks    ShareLink[]
+
+  @@map("workspaces")
+}
+
+model Membership {
+  id          String     @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        MemberRole
+  createdAt   DateTime   @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId])
+  @@map("memberships")
+}
+
+// ─── Brand kits ─────────────────────────────────────────────────────────────
+// Everything the AI needs to know about a product. Field
+// shapes and limits are validated by features/brand-kits/schema.ts.
+
+model BrandKit {
+  id             String   @id @default(cuid())
+  workspaceId    String
+  name           String
+  url            String
+  // One-line description.
+  description    String   @default("")
+  audience       String   @default("")
+  features       String[]
+  pricingSummary String?
+  bannedWords    String[]
+  // Object key in the private media bucket; signed on read, never a URL.
+  logoKey        String?
+  // BrandColors: { primary?, secondary?, accent? } as #rrggbb.
+  colors         Json     @default("{}")
+  // BrandFonts: { heading?, body? } font family names.
+  fonts          Json     @default("{}")
+  tone           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  claims    AllowedClaim[]
+  footage   Footage[]
+  projects  Project[]
+
+  @@index([workspaceId, createdAt])
+  @@map("brand_kits")
+}
+
+// A claim the product may make in ads. Numeric or guaranteed claims in
+// scripts must match one of these (compliance, M4).
+model AllowedClaim {
+  id         String  @id @default(cuid())
+  brandKitId String
+  // Order in the editor, from 0.
+  position   Int
+  text       String
+  sourceUrl  String?
+
+  brandKit BrandKit @relation(fields: [brandKitId], references: [id], onDelete: Cascade)
+
+  @@unique([brandKitId, position])
+  @@map("allowed_claims")
+}
+
+// ─── App rate limits ────────────────────────────────────────────────────────
+// Fixed-window counters for costly actions (src/shared/rate-limit), e.g.
+// AI drafts per workspace per day. Better Auth keeps its own `rate_limits`.
+
+model RateLimitBucket {
+  // e.g. "brand-kit-draft:<workspaceId>"
+  key         String   @id
+  count       Int
+  windowStart DateTime
+
+  @@map("rate_limit_buckets")
+}
+
+// ─── Footage ────────────────────────────────────────────────────────────────
+// Real product footage for ads. Files live in the media
+// bucket under workspaces/<workspaceId>/brand-kits/<brandKitId>/footage/<id>/.
+
+enum FootageStatus {
+  // Row created, file on its way from the browser to storage.
+  UPLOADING
+  // In storage; the worker is converting it and finding key moments.
+  PROCESSING
+  READY
+  FAILED
+}
+
+// Smart analysis of a READY clip (§7.4b): where the action is, idle and
+// scrolling stretches, colours, and an AI description of each key moment.
+enum FootageAnalysisStatus {
+  PENDING
+  RUNNING
+  READY
+  FAILED
+}
+
+enum FootageSource {
+  UPLOAD
+  RECORDING
+}
+
+enum MarkerSource {
+  // Found by scene detection.
+  AUTO
+  // Added by the user (in the editor, or "Mark moment" while recording).
+  MANUAL
+}
+
+model Footage {
+  id                  String                 @id @default(cuid())
+  workspaceId         String
+  brandKitId          String
+  name                String
+  source              FootageSource
+  status              FootageStatus          @default(UPLOADING)
+  // The file as uploaded, and what the worker makes from it.
+  originalKey         String
+  contentType         String
+  sizeBytes           Int
+  videoKey            String?
+  posterKey           String?
+  // One image with `thumbnailCount` frames side by side, one every
+  // `thumbnailIntervalMs`, for the marker timeline.
+  thumbnailsKey       String?
+  thumbnailCount      Int?
+  thumbnailIntervalMs Int?
+  durationMs          Int?
+  width               Int?
+  height              Int?
+  // User-safe reason when status is FAILED.
+  errorMessage        String?
+  // Presentation (background, frame, intro) for the 3D motion (§7.4a),
+  // validated by shared/motion. Null = defaults from the brand kit.
+  presentation        Json?
+  // Bumped by every saved presentation; a save must name the version it
+  // started from, so a stale tab can't overwrite newer work.
+  presentationVersion Int                    @default(0)
+  // What the recorder saw besides the video (surface, cursor track when
+  // the browser shares it), validated by lib/recording. Null for uploads.
+  recording           Json?
+  // Smart analysis (§7.4b), validated by lib/analysis. Null = not analysed.
+  analysis            Json?
+  analysisStatus      FootageAnalysisStatus?
+  processedAt         DateTime?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+
+  workspace    Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  brandKit     BrandKit        @relation(fields: [brandKitId], references: [id], onDelete: Cascade)
+  markers      FootageMarker[]
+  projectClips ProjectClip[]
+  exports      Export[]
+  shareLink    ShareLink?
+
+  @@index([brandKitId, createdAt])
+  @@index([workspaceId])
+  @@index([status, createdAt])
+  @@map("footage")
+}
+
+model FootageMarker {
+  id        String       @id @default(cuid())
+  footageId String
+  atMs      Int
+  label     String?
+  source    MarkerSource
+  // Camera shot the view moves into at this moment (§7.4a), validated by
+  // shared/motion. Null = the camera keeps its previous shot.
+  shot      Json?
+  // What the AI saw on screen here (§7.4b), validated by lib/insight.
+  // Null = not described yet (or the moment moved since).
+  insight   Json?
+  createdAt DateTime     @default(now())
+
+  footage Footage @relation(fields: [footageId], references: [id], onDelete: Cascade)
+
+  @@index([footageId, atMs])
+  @@map("footage_markers")
+}
+
+// ─── Projects (M4) ──────────────────────────────────────────────────────────
+
+// A video: a brand kit's clips in order, each played with its own edit
+// (footage.presentation and markers), joined by transitions.
+model Project {
+  id          String   @id @default(cuid())
+  workspaceId String
+  // Its clips, fonts, colours and logo come from this kit.
+  brandKitId  String
+  name        String
+  // Bumped by every saved change to the clip list; saves name the version
+  // they started from (a stale tab gets a conflict, not an overwrite).
+  version     Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  brandKit  BrandKit      @relation(fields: [brandKitId], references: [id], onDelete: Cascade)
+  clips     ProjectClip[]
+  exports   Export[]
+  shareLink ShareLink?
+
+  @@index([workspaceId, updatedAt])
+  @@index([brandKitId])
+  @@map("projects")
+}
+
+// One clip in a project. The same footage may appear more than once.
+model ProjectClip {
+  id         String @id @default(cuid())
+  projectId  String
+  footageId  String
+  // 0, 1, 2… in playing order.
+  position   Int
+  // How it comes in from the clip before (ignored on the first), validated
+  // by shared/motion's transition schema.
+  transition Json
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  footage Footage @relation(fields: [footageId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, position])
+  @@index([footageId])
+  @@map("project_clips")
+}
+
+// ─── M5: export & share ──────────────────────────────────────────────────
+
+enum ExportStatus {
+  QUEUED
+  RENDERING
+  READY
+  FAILED
+}
+
+// An MP4 of a clip or a video (exactly one of footageId / projectId, checked
+// in SQL), rendered by the worker. Only the newest per target and shape is
+// kept: a finished export replaces the one before (row and file).
+model Export {
+  id           String       @id @default(cuid())
+  workspaceId  String
+  footageId    String?
+  projectId    String?
+  // "16:9" | "9:16" | "1:1" (the stage shapes, validated by the exports slice).
+  shape        String
+  status       ExportStatus @default(QUEUED)
+  // 0–1 while rendering.
+  progress     Float        @default(0)
+  // The clip's or video's name when exported (the download's file name).
+  name         String
+  fileKey      String?
+  sizeBytes    Int?
+  durationMs   Int?
+  // What was rendered (edit, clips, brand kit) as a hash: when the current
+  // one differs, the editor says the export is out of date.
+  fingerprint  String?
+  // User-safe reason when status is FAILED.
+  errorMessage String?
+  finishedAt   DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  footage   Footage?  @relation(fields: [footageId], references: [id], onDelete: Cascade)
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([footageId, shape])
+  @@index([projectId, shape])
+  @@index([workspaceId])
+  @@map("exports")
+}
+
+// A public link (/v/<token>) to a clip or a video (exactly one, checked in
+// SQL). It plays the target's newest finished export; turned off, it 404s.
+model ShareLink {
+  id          String   @id @default(cuid())
+  workspaceId String
+  token       String   @unique
+  footageId   String?  @unique
+  projectId   String?  @unique
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  footage   Footage?  @relation(fields: [footageId], references: [id], onDelete: Cascade)
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@map("share_links")
+}
