@@ -87,8 +87,10 @@ npm i -g neon && neon login  # Neon CLI, once per machine
 neon link --project-id <your-project-id> --no-env-pull -y
 neon checkout dev --create   # a dev branch; applies neon.ts (the private `media` bucket)
                              # and writes DATABASE_URL*, AWS_* into .env
-npm run storage:cors         # once per branch: lets browsers upload to the bucket
+npm run storage:cors         # once per branch: checks browsers can upload to the bucket
 ```
+
+Neon manages bucket CORS itself (open to every origin, files stay private behind signed URLs), so on Neon the command only verifies the rules; on other S3 stores it sets them.
 
 **With your own Postgres and S3** — set `DATABASE_URL`, `DATABASE_URL_UNPOOLED` and the `AWS_*` variables in `.env` yourself, then:
 
@@ -144,7 +146,7 @@ App-wide safety limits (clip size and length, daily AI and export budgets) live 
 | `npm run db:deploy` | Apply existing migrations |
 | `npm run db:generate` | Regenerate the Prisma client |
 | `npm run db:studio` | Browse the database |
-| `npm run storage:cors` | Set the bucket's CORS so browsers can upload (`-- --create-bucket` for a local S3 server) |
+| `npm run storage:cors` | Let browsers upload to the bucket: sets its CORS, or checks it where the store manages CORS (Neon). `-- --create-bucket` for a local S3 server |
 
 ## Project structure
 
