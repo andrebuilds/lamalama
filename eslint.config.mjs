@@ -10,9 +10,11 @@ const noAppImports = {
 const noFeatureInternals = {
   // client.ts: the browser-safe part of a slice's API, for other slices'
   // client components (index.ts also exports server-only queries).
-  group: ["@/features/*/*", "!@/features/*/client"],
+  // server.ts: the UI-free part, for code the job worker loads (index.ts
+  // also exports components, which the worker can't load).
+  group: ["@/features/*/*", "!@/features/*/client", "!@/features/*/server"],
   message:
-    "Import other features only through their public API: '@/features/<name>' (index.ts), or '@/features/<name>/client' from client components.",
+    "Import other features only through their public API: '@/features/<name>' (index.ts), '@/features/<name>/client' from client components, or '@/features/<name>/server' from code the worker loads.",
 };
 const noFeatures = {
   group: ["@/features", "@/features/*"],

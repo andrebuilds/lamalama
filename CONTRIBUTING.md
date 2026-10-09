@@ -34,7 +34,7 @@ You need Node.js 22+, a Postgres database and an S3-compatible bucket. The READM
 
 - Code is organised **by feature** (`src/features/<feature>`), not by layer.
 - `src/app` holds **thin routes only**: read params, check auth, render feature components.
-- Other code imports a feature **only through its `index.ts`** (or its browser-safe `client.ts`). ESLint enforces this.
+- Other code imports a feature **only through its `index.ts`** (or its browser-safe `client.ts`, or its UI-free `server.ts` from code the job worker loads). ESLint enforces this.
 - `src/shared` is feature-agnostic and must never import from `src/features`.
 - Business rules live in `service.ts`; server actions stay thin: validate → authorise → call the service → revalidate.
 - Every server action and route that touches workspace data starts with `requireWorkspaceAccess("<permission>")` and scopes its queries by the returned workspace id. Pages read `actions` from `getCurrentWorkspace()` and hide what the user can't do with `can(actions, "<permission>")`. Permissions live in `src/features/workspaces/lib/permissions.ts`.
