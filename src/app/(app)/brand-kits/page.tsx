@@ -25,10 +25,10 @@ import {
 export const metadata: Metadata = { title: "Brand kits" }
 
 export default async function BrandKitsPage() {
-  const { workspace, role } = await requireWorkspaceAccess("workspace:view")
+  const { workspace, actions } = await requireWorkspaceAccess("workspace:view")
   const kits = await listBrandKits(workspace.id)
   const logos = await Promise.all(kits.map((kit) => logoUrlFor(kit.logoKey)))
-  const canCreate = can(role, "content:create")
+  const canCreate = can(actions, "brandkits:manage")
 
   return (
     <div className="flex flex-1 flex-col gap-8">

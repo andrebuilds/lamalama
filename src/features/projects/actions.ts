@@ -41,7 +41,7 @@ export async function createProject(
   try {
     const parsed = createProjectSchema.safeParse(input)
     if (!parsed.success) throw invalid(parsed.error, "Check the video.")
-    const { workspace } = await requireWorkspaceAccess("content:create")
+    const { workspace } = await requireWorkspaceAccess("videos:manage")
     const { id } = await service.createProject(workspace.id, parsed.data)
     refreshProjects()
     return ok({ projectId: id })
@@ -55,7 +55,7 @@ export async function renameProject(input: unknown): Promise<Result<null>> {
   try {
     const parsed = renameProjectSchema.safeParse(input)
     if (!parsed.success) throw invalid(parsed.error, "Check the name.")
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("videos:manage")
     await service.renameProject(
       workspace.id,
       parsed.data.projectId,
@@ -73,7 +73,7 @@ export async function deleteProject(input: unknown): Promise<Result<null>> {
   try {
     const parsed = projectIdSchema.safeParse(input)
     if (!parsed.success) throw invalid(parsed.error, "Check the video.")
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("videos:manage")
     const { folder } = await service.deleteProject(
       workspace.id,
       parsed.data.projectId
@@ -100,7 +100,7 @@ export async function saveProjectClips(
   try {
     const parsed = saveProjectClipsSchema.safeParse(input)
     if (!parsed.success) throw invalid(parsed.error, "Check the clips.")
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("videos:manage")
     const version = await service.saveProjectClips(workspace.id, parsed.data)
     // The list and dashboard show clip counts and length; the project page
     // already shows this.
@@ -122,7 +122,7 @@ export async function appendProjectClip(
   try {
     const parsed = appendClipSchema.safeParse(input)
     if (!parsed.success) throw invalid(parsed.error, "Check the clip.")
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("videos:manage")
     const version = await service.appendClip(
       workspace.id,
       parsed.data.projectId,

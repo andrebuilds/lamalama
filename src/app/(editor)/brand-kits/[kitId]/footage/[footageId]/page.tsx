@@ -35,7 +35,7 @@ export default async function FootageEditorPage({
 }: PageProps<"/brand-kits/[kitId]/footage/[footageId]">) {
   const { kitId, footageId } = await params
   const { video: videoId, from } = await searchParams
-  const { workspace, role } = await requireWorkspaceAccess("workspace:view")
+  const { workspace, actions } = await requireWorkspaceAccess("workspace:view")
   const [kit, clip, project] = await Promise.all([
     getBrandKit(workspace.id, kitId),
     getFootage(workspace.id, footageId),
@@ -66,7 +66,8 @@ export default async function FootageEditorPage({
       }
     : null
 
-  const canEdit = can(role, "content:edit")
+  const canEdit = can(actions, "footage:edit")
+  const canDelete = can(actions, "footage:delete")
   const colors = kit.colors
   const brandColors = [colors.primary, colors.secondary, colors.accent].filter(
     (color): color is string => Boolean(color)
@@ -91,7 +92,7 @@ export default async function FootageEditorPage({
         </div>
       </>
     ),
-    end: canEdit ? (
+    end: canDelete ? (
       <DeleteClipButton
         footageId={clip.id}
         clipName={clip.name}
@@ -112,6 +113,8 @@ export default async function FootageEditorPage({
           initialPresentation={presentationFor(clip.presentation, colors)}
           brandColors={brandColors}
           readOnly={!canEdit}
+          canDelete={canDelete}
+          canExport={can(actions, "render:start")}
           kitId={kitId}
           kitName={kit.name}
           kitFonts={kit.fonts}

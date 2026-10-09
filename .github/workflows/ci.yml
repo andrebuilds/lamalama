@@ -23,7 +23,10 @@ env:
   AI_TEXT_PROVIDER: anthropic
   AI_TEXT_MODEL: ci
   ANTHROPIC_API_KEY: sk-ant-ci
+  AI_KEY_SOURCE: env
   AI_VISION: "off"
+  # CI-only placeholder: encrypts workspace API keys saved during tests.
+  APP_ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
   # Storage: a local SeaweedFS S3 server started in each job (open source,
   # no account). Dummy credentials from .github/s3-ci.json.
   AWS_ACCESS_KEY_ID: ci-access

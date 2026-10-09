@@ -5,6 +5,7 @@ import { unstable_rethrow } from "next/navigation"
 import { z } from "zod"
 
 import { requireWorkspaceAccess } from "@/features/workspaces"
+import { getWorkspaceAiKey } from "@/features/ai-keys"
 import { aiLimits } from "@/shared/config/limits"
 import { AppError } from "@/shared/lib/errors"
 import { err, ok, toResultError, type Result } from "@/shared/lib/result"
@@ -54,7 +55,10 @@ export async function createBrandKitFromUrl(
     const parsed = createFromUrlSchema.safeParse({ url })
     if (!parsed.success) throw invalid(parsed.error, "Check the address.")
 
-    const { workspace } = await requireWorkspaceAccess("content:create")
+    const { workspace } = await requireWorkspaceAccess(
+      "brandkits:manage",
+      "ai:use"
+    )
     await consumeRateLimit({
       key: `brand-kit-draft:${workspace.id}`,
       limit: aiLimits.brandKitDraftsPerDay,
@@ -62,7 +66,9 @@ export async function createBrandKitFromUrl(
       message: `You’ve drafted ${aiLimits.brandKitDraftsPerDay} brand kits from a website today. Try again tomorrow, or fill one in yourself.`,
     })
 
-    const draft = await draftKitFromUrl(parsed.data.url)
+    const draft = await draftKitFromUrl(parsed.data.url, {
+      apiKey: await getWorkspaceAiKey(workspace.id),
+    })
     const { id } = await service.createBrandKit(workspace.id, draft.fields)
 
     // A missing logo never fails the kit; the user can upload one.
@@ -89,7 +95,7 @@ export async function createBrandKitManually(
     const parsed = createFromUrlSchema.safeParse({ url })
     if (!parsed.success) throw invalid(parsed.error, "Check the address.")
 
-    const { workspace } = await requireWorkspaceAccess("content:create")
+    const { workspace } = await requireWorkspaceAccess("brandkits:manage")
     const { id } = await service.createBrandKit(
       workspace.id,
       blankFields(parsed.data.url)
@@ -117,7 +123,7 @@ export async function saveBrandKit(
       )
     }
 
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("brandkits:manage")
     await service.updateBrandKit(
       workspace.id,
       parsed.data.kitId,
@@ -154,7 +160,7 @@ export async function uploadBrandKitLogo(
     const type = sniffLogoType(bytes)
     if (!type) throw new AppError("VALIDATION", logoWrongType)
 
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("brandkits:manage")
     await storeLogo(workspace.id, kitId.data, { bytes, type })
 
     refreshKits()
@@ -172,7 +178,7 @@ export async function removeBrandKitLogo(
     const parsed = kitIdSchema.safeParse(kitId)
     if (!parsed.success) throw new AppError("NOT_FOUND", "Brand kit not found.")
 
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("brandkits:manage")
     const { previousLogoKey } = await service.setBrandKitLogo(
       workspace.id,
       parsed.data,
@@ -193,7 +199,7 @@ export async function deleteBrandKit(kitId: unknown): Promise<Result<null>> {
     const parsed = kitIdSchema.safeParse(kitId)
     if (!parsed.success) throw new AppError("NOT_FOUND", "Brand kit not found.")
 
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("brandkits:manage")
     await service.deleteBrandKit(workspace.id, parsed.data)
     // Everything the kit stored (logo, footage) lives under its folder.
     const folder = `${workspaceFileKey(workspace.id, "brand-kits", parsed.data)}/`

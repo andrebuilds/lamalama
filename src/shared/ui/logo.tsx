@@ -21,7 +21,9 @@ export function Logo({ className }: { className?: string }) {
         alt=""
         fill
         sizes="48px"
-        className="scale-[1.45] object-contain"
+        // No white asset in the repo: in dark mode the mark is flattened to
+        // black then inverted, so every opaque pixel turns white.
+        className="scale-[1.45] object-contain dark:brightness-0 dark:invert"
       />
     </span>
   )

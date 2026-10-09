@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { useState, useTransition } from "react"
 
+import { AiKeyNotice } from "@/shared/ai/ai-status"
 import { cn } from "@/shared/lib/utils"
 import {
   defaultShot,
@@ -172,6 +173,7 @@ function AnalysisStatus({
       )}
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <p className="text-sm">{message}</p>
+        <AiKeyNotice className="bg-background" />
         {!readOnly && !isWorking && (
           <div>
             <Button

@@ -4,17 +4,14 @@ import { usePathname } from "next/navigation"
 
 import { Separator } from "@/shared/ui/separator"
 import { SidebarTrigger } from "@/shared/ui/sidebar"
+import { ThemeToggle } from "@/shared/ui/theme-toggle"
 
 import { titleFor } from "./nav-config"
-import { UserMenu, type MenuUser } from "./user-menu"
+import { LlamaRain } from "./llama-rain"
 
-export function AppHeader({
-  user,
-  signOutItem,
-}: {
-  user: MenuUser
-  signOutItem: React.ReactNode
-}) {
+// The user menu lives only in the sidebar footer; the header keeps the
+// page title plus global actions (GitHub stars, theme).
+export function AppHeader({ actions }: { actions?: React.ReactNode }) {
   const pathname = usePathname()
 
   return (
@@ -25,8 +22,18 @@ export function AppHeader({
         className="mr-2 data-vertical:h-4 data-vertical:self-auto"
       />
       <span className="text-sm font-medium">{titleFor(pathname)}</span>
-      <div className="ml-auto">
-        <UserMenu user={user} signOutItem={signOutItem} variant="header" />
+      <div className="ml-auto flex items-center gap-1">
+        <LlamaRain />
+        <Separator
+          orientation="vertical"
+          className="mx-1.5 data-vertical:h-4 data-vertical:self-auto"
+        />
+        {actions}
+        <Separator
+          orientation="vertical"
+          className="mx-1.5 data-vertical:h-4 data-vertical:self-auto"
+        />
+        <ThemeToggle />
       </div>
     </header>
   )

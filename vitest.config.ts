@@ -10,7 +10,9 @@ const fromRoot = (path: string) => fileURLToPath(new URL(path, import.meta.url))
 // Variables already set in the shell win, as with dotenv (e.g. CI pointing
 // storage at a local S3 server).
 const envFile = fromRoot("./.env")
-const fileEnv = existsSync(envFile) ? parseEnv(readFileSync(envFile, "utf8")) : {}
+const fileEnv = existsSync(envFile)
+  ? parseEnv(readFileSync(envFile, "utf8"))
+  : {}
 const env = Object.fromEntries(
   Object.entries(fileEnv).filter(([name]) => process.env[name] === undefined)
 )
@@ -23,6 +25,8 @@ export default defineConfig({
       "server-only": fromRoot("./node_modules/server-only/empty.js"),
       // Next's font loader only runs inside Next's build.
       "next/font/google": fromRoot("./src/shared/testing/next-font-stub.ts"),
+      // cookies() throws outside a request (the active workspace reads it).
+      "next/headers": fromRoot("./src/shared/testing/next-headers-stub.ts"),
     },
   },
   test: {

@@ -21,12 +21,12 @@ import { LinkButton } from "@/shared/ui/link-button"
 export const metadata: Metadata = { title: "Videos" }
 
 export default async function VideosPage() {
-  const { workspace, role } = await requireWorkspaceAccess("workspace:view")
+  const { workspace, actions } = await requireWorkspaceAccess("workspace:view")
   const [projects, kits] = await Promise.all([
     listProjects(workspace.id),
     listBrandKits(workspace.id),
   ])
-  const canCreate = can(role, "content:create")
+  const canCreate = can(actions, "videos:manage")
 
   return (
     <div className="flex flex-1 flex-col gap-8">
@@ -48,7 +48,7 @@ export default async function VideosPage() {
       {projects.length > 0 ? (
         <ProjectsGrid
           projects={projects}
-          canDelete={can(role, "content:edit")}
+          canDelete={can(actions, "videos:manage")}
         />
       ) : (
         <Empty className="flex-1 border">

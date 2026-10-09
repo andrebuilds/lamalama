@@ -18,8 +18,10 @@ enum UserRole {
 
 enum MemberRole {
   OWNER
+  ADMIN
   EDITOR
   VIEWER
+  CUSTOM // permissions picked one by one
 }
 
 // ─── Better Auth core tables ────────────────────────────────────────────────
@@ -33,6 +35,11 @@ model User {
   emailVerified Boolean  @default(false)
   image         String?
   role          UserRole @default(USER)
+  /// Uploaded profile photo in storage (`users/<id>/...`); `image` points at
+  /// /api/avatar/<id>, which signs it. Not in Better Auth's schema.
+  avatarKey     String?
+  /// Picked llama mascot id (account/lib/mascots.ts). Better Auth additional field.
+  mascot        String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -40,6 +47,7 @@ model User {
   accounts          Account[]
   memberships       Membership[]
   personalWorkspace Workspace?   @relation("PersonalWorkspace")
+  sentInvitations   Invitation[]
 
   @@map("users")
 }
@@ -121,8 +129,50 @@ model Workspace {
   projects      Project[]
   exports       Export[]
   shareLinks    ShareLink[]
+  secrets       WorkspaceSecret[]
+  invitations   Invitation[]
 
   @@map("workspaces")
+}
+
+// A pending email invitation to join a workspace with a given role.
+// Accepting creates the Membership and deletes the row; re-inviting the
+// same address refreshes the token, role and expiry (upsert).
+model Invitation {
+  id          String     @id @default(cuid())
+  workspaceId String
+  email       String // stored lowercase; must match the accepting account
+  role        MemberRole // never OWNER; the service refuses it
+  permissions String[]   @default([])
+  token       String     @unique
+  expiresAt   DateTime
+  invitedById String
+  createdAt   DateTime   @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invitedBy User      @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, email])
+  @@index([workspaceId])
+  @@map("invitations")
+}
+
+// BYOK: provider API keys, one row per workspace and provider. The key is
+// AES-256-GCM encrypted with APP_ENCRYPTION_KEY (src/shared/lib/secrets.ts);
+// only the last characters are kept readable for display.
+model WorkspaceSecret {
+  id          String   @id @default(cuid())
+  workspaceId String
+  provider    String // matches AI_TEXT_PROVIDER values ("anthropic")
+  encrypted   String // base64: iv | auth tag | ciphertext
+  hint        String // last 4 characters, for "sk-ant-••••1234"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, provider])
+  @@map("workspace_secrets")
 }
 
 model Membership {
@@ -130,6 +180,8 @@ model Membership {
   userId      String
   workspaceId String
   role        MemberRole
+  // Granted permissions (lib/permissions). Ignored for OWNER, who has all.
+  permissions String[]   @default([])
   createdAt   DateTime   @default(now())
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)

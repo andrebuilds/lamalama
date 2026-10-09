@@ -79,7 +79,11 @@ export type KitDraft = {
  */
 export async function draftKitFromUrl(
   url: string,
-  options: { model?: LanguageModel; policy?: NetworkPolicy } = {}
+  options: {
+    apiKey?: string
+    model?: LanguageModel
+    policy?: NetworkPolicy
+  } = {}
 ): Promise<KitDraft> {
   let home: PageFacts
   try {
@@ -108,6 +112,7 @@ export async function draftKitFromUrl(
       ]
         .filter(Boolean)
         .join("\n\n"),
+      apiKey: options.apiKey,
       model: options.model,
     })
   } catch (error) {

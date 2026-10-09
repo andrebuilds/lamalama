@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 
+import { AiKeyNotice, useAiStatus } from "@/shared/ai/ai-status"
 import type { Result } from "@/shared/lib/result"
 import { Button } from "@/shared/ui/button"
 import {
@@ -30,6 +31,7 @@ import {
  */
 export function CreateKitForm() {
   const router = useRouter()
+  const { ready: aiReady } = useAiStatus()
   const [url, setUrl] = useState("")
   const [failure, setFailure] = useState<Result<CreatedKit> | null>(null)
   const [isPending, startCreate] = useTransition()
@@ -56,9 +58,11 @@ export function CreateKitForm() {
   const urlError =
     error?.fieldErrors?.url?.[0] ??
     (error?.code === "VALIDATION" ? error.message : undefined)
-  // Reading the site failed (or the daily AI limit was hit): offer a way on.
-  // A missing permission would fail the same way, so not then.
-  const canFillManually = error !== null && error.code !== "FORBIDDEN"
+  // Reading the site failed (or the daily AI limit was hit, or there's no
+  // AI key): offer a way on. A missing permission would fail the same way,
+  // so not then.
+  const canFillManually =
+    !aiReady || (error !== null && error.code !== "FORBIDDEN")
 
   function createManually() {
     startManual(async () => {
@@ -91,19 +95,21 @@ export function CreateKitForm() {
             aria-invalid={urlError ? true : undefined}
             disabled={isBusy}
           />
-          <Button type="submit" disabled={isBusy}>
+          <Button type="submit" disabled={isBusy || !aiReady}>
             {isPending && <Spinner data-icon="inline-start" />}
             Create from website
           </Button>
         </div>
         {urlError ? (
           <FieldError>{urlError}</FieldError>
-        ) : (
+        ) : aiReady ? (
           <FieldDescription aria-live="polite">
             {isPending
               ? "Reading your site and drafting your brief. This can take up to 30 seconds."
               : "We’ll read your site and draft the brief. You can edit everything after."}
           </FieldDescription>
+        ) : (
+          <AiKeyNotice />
         )}
       </Field>
       {canFillManually && (

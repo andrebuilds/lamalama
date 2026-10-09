@@ -1,6 +1,13 @@
-import { getCurrentWorkspace } from "@/features/workspaces"
+import type { Metadata } from "next"
+
+import { hasAiKey } from "@/features/ai-keys"
+import { can, getCurrentWorkspace } from "@/features/workspaces"
+import { AiStatusProvider } from "@/shared/ai/ai-status"
 import { cn } from "@/shared/lib/utils"
 import { buttonVariants } from "@/shared/ui/button"
+
+// Private pages: never in search results.
+export const metadata: Metadata = { robots: { index: false, follow: false } }
 
 /**
  * Full-screen editors (the footage editor): no app sidebar or top bar, so
@@ -12,7 +19,8 @@ export default async function EditorLayout({
 }: {
   children: React.ReactNode
 }) {
-  await getCurrentWorkspace()
+  const { workspace, actions } = await getCurrentWorkspace()
+  const aiReady = await hasAiKey(workspace.id)
   return (
     <>
       {/* First tab stop: jumps past the editor's top bar (WCAG 2.4.1). */}
@@ -25,7 +33,14 @@ export default async function EditorLayout({
       >
         Skip to content
       </a>
-      {children}
+      {/* Same AI status as the app shell: the editor's AI controls read it. */}
+      <AiStatusProvider
+        hasKey={aiReady}
+        canUse={can(actions, "ai:use")}
+        canManage={can(actions, "apikey:manage")}
+      >
+        {children}
+      </AiStatusProvider>
     </>
   )
 }

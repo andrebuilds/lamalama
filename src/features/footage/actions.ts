@@ -5,6 +5,7 @@ import { unstable_rethrow } from "next/navigation"
 import { z } from "zod"
 
 import { getBrandKit } from "@/features/brand-kits"
+import { getWorkspaceAiKey } from "@/features/ai-keys"
 import { requireWorkspaceAccess } from "@/features/workspaces"
 import { aiLimits } from "@/shared/config/limits"
 import { enqueue } from "@/shared/jobs"
@@ -74,7 +75,7 @@ export async function requestFootageUpload(
     const parsed = requestUploadSchema.safeParse(input)
     if (!parsed.success) throw invalid(parsed.error, "Check the file.")
 
-    const { workspace } = await requireWorkspaceAccess("content:create")
+    const { workspace } = await requireWorkspaceAccess("footage:upload")
     const { footageId, originalKey } = await service.createFootageUpload(
       workspace.id,
       parsed.data
@@ -105,7 +106,7 @@ export async function completeFootageUpload(
     if (!parsed.success) throw invalid(parsed.error, "Check the upload.")
     const { footageId, recordedMarksMs, recording } = parsed.data
 
-    const { workspace } = await requireWorkspaceAccess("content:create")
+    const { workspace } = await requireWorkspaceAccess("footage:upload")
     const clip = await service.getUploadingFootage(workspace.id, footageId)
     if (clip) {
       const size = await fileSize(clip.originalKey)
@@ -143,7 +144,7 @@ export async function deleteFootage(footageId: unknown): Promise<Result<null>> {
     const parsed = footageIdSchema.safeParse(footageId)
     if (!parsed.success) throw new AppError("NOT_FOUND", "Clip not found.")
 
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("footage:delete")
     const { folder } = await service.deleteFootage(workspace.id, parsed.data)
     // The clip is gone either way; leftover files are only wasted space.
     await deleteFolder(folder).catch((error: unknown) =>
@@ -165,7 +166,7 @@ export async function addFootageMarker(
     const parsed = addMarkerSchema.safeParse(input)
     if (!parsed.success) throw invalid(parsed.error, "Check the marker.")
 
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("footage:edit")
     const { id } = await service.addMarker(workspace.id, parsed.data)
     await queueAnalysis(workspace.id, parsed.data.footageId)
 
@@ -184,7 +185,7 @@ export async function updateFootageMarker(
     const parsed = updateMarkerSchema.safeParse(input)
     if (!parsed.success) throw invalid(parsed.error, "Check the label.")
 
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("footage:edit")
     await service.updateMarkerLabel(
       workspace.id,
       parsed.data.markerId,
@@ -206,7 +207,7 @@ export async function deleteFootageMarker(
     const parsed = footageIdSchema.safeParse(markerId)
     if (!parsed.success) throw new AppError("NOT_FOUND", "That marker is gone.")
 
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("footage:edit")
     await service.deleteMarker(workspace.id, parsed.data)
 
     refreshFootage()
@@ -223,7 +224,7 @@ export async function updateMarkerShot(input: unknown): Promise<Result<null>> {
     if (!parsed.success)
       throw invalid(parsed.error, "Check the camera settings.")
 
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("footage:edit")
     await service.setMarkerShot(
       workspace.id,
       parsed.data.markerId,
@@ -246,7 +247,7 @@ export async function updateFootagePresentation(
     const parsed = updatePresentationSchema.safeParse(input)
     if (!parsed.success) throw invalid(parsed.error, "Check the clip’s style.")
 
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("footage:edit")
     const version = await service.setFootagePresentation(
       workspace.id,
       parsed.data.footageId,
@@ -277,7 +278,7 @@ export async function directFootageEdit(
     if (!parsed.success)
       throw invalid(parsed.error, "Describe the ad you want.")
 
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("footage:edit", "ai:use")
     const clip = await getFootage(workspace.id, parsed.data.footageId)
     if (!clip || clip.status !== "READY" || !clip.durationMs) {
       throw new AppError("NOT_FOUND", "That clip isn’t ready yet.")
@@ -299,6 +300,7 @@ export async function directFootageEdit(
     const analysis = parseStoredAnalysis(clip.analysis)
     const recording = parseStoredRecording(clip.recording)
     const plan = await directEdit({
+      apiKey: await getWorkspaceAiKey(workspace.id),
       instruction: parsed.data.instruction,
       durationMs: clip.durationMs,
       moments: clip.markers.map((marker) => {
@@ -336,7 +338,7 @@ export async function moveFootageMarker(input: unknown): Promise<Result<null>> {
     const parsed = moveMarkerSchema.safeParse(input)
     if (!parsed.success) throw invalid(parsed.error, "Check the new time.")
 
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("footage:edit")
     const moved = await service.moveMarker(
       workspace.id,
       parsed.data.markerId,
@@ -383,7 +385,7 @@ export async function analyzeFootageAgain(
     const parsed = footageIdSchema.safeParse(footageId)
     if (!parsed.success) throw new AppError("NOT_FOUND", "That clip is gone.")
 
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("footage:edit", "ai:use")
     const queued = await queueAnalysis(workspace.id, parsed.data, {
       redescribe: true,
     })
@@ -405,7 +407,7 @@ export async function suggestMomentGraphic(
     const parsed = suggestGraphicSchema.safeParse(input)
     if (!parsed.success) throw new AppError("NOT_FOUND", "That moment is gone.")
 
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("footage:edit", "ai:use")
     const clip = await getFootage(workspace.id, parsed.data.footageId)
     const marker = clip?.markers.find((m) => m.id === parsed.data.markerId)
     if (!clip || !marker)
@@ -422,6 +424,7 @@ export async function suggestMomentGraphic(
         insight: parseStoredInsight(marker.insight),
         label: marker.label,
         brandName: kit?.name ?? "the product",
+        apiKey: await getWorkspaceAiKey(workspace.id),
       })
     )
   } catch (error) {

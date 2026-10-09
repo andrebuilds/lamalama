@@ -1,5 +1,10 @@
 import type { Metadata } from "next"
 
+import {
+  DeleteAccountButton,
+  MascotPicker,
+  ProfilePhotoField,
+} from "@/features/account"
 import { ProfileForm, SignOutButton } from "@/features/auth"
 import { getCurrentWorkspace } from "@/features/workspaces"
 import {
@@ -26,6 +31,11 @@ export default async function ProfileSettingsPage() {
           <CardDescription>How you appear in LamaLama.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
+          <ProfilePhotoField
+            name={user.name}
+            email={user.email}
+            image={user.image}
+          />
           <ProfileForm currentName={user.name} />
           <Field data-disabled>
             <FieldLabel htmlFor="profile-email">Email</FieldLabel>
@@ -38,6 +48,17 @@ export default async function ProfileSettingsPage() {
       </Card>
       <Card>
         <CardHeader>
+          <CardTitle>Mascot</CardTitle>
+          <CardDescription>
+            Pick the llama that keeps you company in your user menu.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MascotPicker current={user.mascot ?? null} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
           <CardTitle>Sign out</CardTitle>
           <CardDescription>
             Sign out of LamaLama on this device.
@@ -46,6 +67,18 @@ export default async function ProfileSettingsPage() {
         {/* CardFooter keeps the button at its natural width. */}
         <CardFooter>
           <SignOutButton />
+        </CardFooter>
+      </Card>
+      <Card className="border-destructive/40">
+        <CardHeader>
+          <CardTitle>Delete account</CardTitle>
+          <CardDescription>
+            Permanently deletes your account, your personal workspace and every
+            workspace you own.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <DeleteAccountButton email={user.email} />
         </CardFooter>
       </Card>
     </div>

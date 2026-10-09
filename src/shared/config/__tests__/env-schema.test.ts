@@ -18,6 +18,7 @@ const validEnv = {
   AI_TEXT_PROVIDER: "anthropic",
   AI_TEXT_MODEL: "claude-sonnet-5",
   ANTHROPIC_API_KEY: "sk-ant-123",
+  APP_ENCRYPTION_KEY: "0".repeat(64),
   AWS_ACCESS_KEY_ID: "key-id",
   AWS_SECRET_ACCESS_KEY: "secret",
   AWS_ENDPOINT_URL_S3: "https://storage.example.com",
@@ -78,6 +79,16 @@ describe("parseEnv", () => {
     } catch (error) {
       expect(String(error)).not.toContain(key)
     }
+  })
+
+  it("keeps AI on saved keys unless the env fallback is asked for", () => {
+    expect(parseEnv(validEnv).AI_KEY_SOURCE).toBe("byok")
+    expect(parseEnv({ ...validEnv, AI_KEY_SOURCE: "env" }).AI_KEY_SOURCE).toBe(
+      "env"
+    )
+    expect(() => parseEnv({ ...validEnv, AI_KEY_SOURCE: "both" })).toThrow(
+      /AI_KEY_SOURCE/
+    )
   })
 
   it("requires the storage variables", () => {

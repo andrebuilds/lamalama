@@ -1,3 +1,4 @@
+import { LogInIcon, UserPlusIcon } from "lucide-react"
 import Link from "next/link"
 
 import { getSession } from "@/features/auth"
@@ -23,10 +24,12 @@ export async function SiteHeader() {
             <LinkButton href="/dashboard">Dashboard</LinkButton>
           ) : (
             <>
-              <LinkButton href="/sign-in" variant="ghost">
+              <LinkButton href="/sign-in" variant="ghost" icon={<LogInIcon />}>
                 Sign in
               </LinkButton>
-              <LinkButton href="/sign-up">Sign up</LinkButton>
+              <LinkButton href="/sign-up" icon={<UserPlusIcon />}>
+                Sign up
+              </LinkButton>
             </>
           )}
         </nav>

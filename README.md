@@ -1,7 +1,7 @@
 <div align="center">
 
 <a href="https://lamalama.video">
-  <img src="public/logo.png" alt="LamaLama logo: two llamas facing a play button" width="160" height="160">
+  <img src="public/logo-512.png" alt="LamaLama logo: two llamas facing a play button" width="160" height="160">
 </a>
 
 # LamaLama
@@ -16,6 +16,12 @@ let the AI direct the first cut, polish it in a real editor, then export an MP4 
 [![CI](https://github.com/andrebuilds/lamalama/actions/workflows/ci.yml/badge.svg)](https://github.com/andrebuilds/lamalama/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+<br>
+
+<a href="https://lamalama.video">
+  <img src="public/Screenshot-prodotto.png" alt="LamaLama home page: Record your screen. Ship a video that sells." width="900">
+</a>
 
 </div>
 
@@ -41,7 +47,18 @@ LamaLama does the directing for you, right in the browser.
 - **Motion studio** — camera moves, cuts, speed, transitions, text, motion graphics, layouts, lens looks, an AI director and a full-screen preview.
 - **Videos** — join clips in order with transitions; versioned saves keep two open tabs from overwriting each other.
 - **Export and share** — render MP4s in every aspect ratio, or publish a revocable public share link.
+- **Workspaces and teams** — invite teammates by email as Admin, Editor or Viewer, or pick exactly what each member can do.
+- **Bring your own AI key** — each workspace adds its own Anthropic API key, encrypted at rest; AI features stay off until there is one.
+- **Profile** — a photo, your own llama mascot, and account deletion.
 - **Sign in** with Google, GitHub or an email magic link.
+
+### One more thing: Llamageddon
+
+<div align="center">
+  <img src="public/gif-prodotto.gif" alt="Llamageddon: a herd of llamas raining down the LamaLama dashboard" width="720">
+</div>
+
+Press **Make it rain** in the dashboard header. You're welcome.
 
 ## Tech stack
 
@@ -65,7 +82,10 @@ LamaLama does the directing for you, right in the browser.
 - **Node.js 22** or newer, and npm
 - A **PostgreSQL** database (17 recommended). [Neon](https://neon.tech) is what the project is built on; any Postgres works.
 - An **S3-compatible bucket**. Neon Object Storage is the default; for local development a [SeaweedFS](https://github.com/seaweedfs/seaweedfs) or MinIO container works too.
-- API keys for **Resend** (email) and **Anthropic** (AI), plus **Google** and **GitHub** OAuth apps for sign-in.
+- An API key for **Resend** (email), plus **Google** and **GitHub** OAuth apps for sign-in.
+- An **encryption key** for saved API keys: `openssl rand -hex 32`.
+
+AI runs on each workspace's own Anthropic key, added in the app under **Settings → API key**. A key in `.env` is optional, for development and CI only (see `AI_KEY_SOURCE` below).
 
 ffmpeg and ffprobe are installed from npm; Remotion downloads its headless Chrome on first render. Nothing else to install by hand.
 
@@ -120,7 +140,9 @@ Every variable is listed in [`.env.example`](.env.example) and validated at star
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth |
 | `RESEND_API_KEY` / `EMAIL_FROM` | Magic-link emails, e.g. `LamaLama <hello@yourdomain.com>` |
-| `AI_TEXT_PROVIDER` / `AI_TEXT_MODEL` / `ANTHROPIC_API_KEY` | AI provider, model id and key |
+| `AI_TEXT_PROVIDER` / `AI_TEXT_MODEL` | AI provider and model id |
+| `ANTHROPIC_API_KEY` / `AI_KEY_SOURCE` | Optional fallback key for development and CI. Used only with `AI_KEY_SOURCE=env`; the default `byok` counts only keys saved in a workspace |
+| `APP_ENCRYPTION_KEY` | 64 hex characters that encrypt workspace API keys at rest: `openssl rand -hex 32`. Keep it safe: changing it makes saved keys unreadable |
 | `AI_VISION` | `on` (default) or `off` to skip AI descriptions of key moments |
 | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_ENDPOINT_URL_S3` / `AWS_REGION` | S3-compatible storage |
 | `REMOTION_LICENSE_KEY` | Optional, see [Remotion licence](#remotion-licence) |
@@ -155,7 +177,7 @@ LamaLama is organised **by feature (vertical slices)**, not by layer.
 ```
 src/
 ├── app/        # thin routes only: read params, check auth, render features
-├── features/   # one folder per slice (auth, workspaces, brand-kits, footage, projects, exports)
+├── features/   # one folder per slice (auth, account, workspaces, ai-keys, brand-kits, footage, projects, exports)
 │               # other code imports a slice only through its index.ts
 ├── remotion/   # video compositions, shared by the editor preview and the renderer
 ├── worker/     # the background job worker (pg-boss + ffmpeg + Remotion)
@@ -192,7 +214,7 @@ LamaLama runs as two Node processes:
 1. **The web app** — `npm run build && npm start`.
 2. **The worker** — `npm run worker`. It runs ffmpeg and headless Chrome for renders, so give it a machine with a few GB of RAM.
 
-Both read the same environment variables. Run `npm run db:deploy` on each release.
+Both read the same environment variables, including the same `APP_ENCRYPTION_KEY`. Run `npm run db:deploy` on each release.
 
 ## Remotion licence
 

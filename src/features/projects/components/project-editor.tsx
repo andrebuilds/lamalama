@@ -86,6 +86,7 @@ export function ProjectEditor({
   kitClips,
   footage,
   readOnly,
+  canExport,
 }: {
   project: ProjectDetail
   /** The brand kit's clips, for "Choose from footage". */
@@ -93,6 +94,8 @@ export function ProjectEditor({
   /** Recording and uploading into the video. */
   footage: { maxBytes: number; maxDurationSeconds: number; canAdd: boolean }
   readOnly: boolean
+  /** Render and share: its own permission, apart from editing. */
+  canExport: boolean
 }) {
   const router = useRouter()
   const [entries, setEntries] = useState<Entry[]>(() =>
@@ -377,7 +380,7 @@ export function ProjectEditor({
         )}
         <ExportDialog
           target={{ kind: "video", id: project.id }}
-          canEdit={!readOnly}
+          canEdit={canExport}
         />
       </header>
 

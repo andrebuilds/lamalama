@@ -6,7 +6,8 @@ import { join } from "node:path"
 
 import { env } from "@/shared/config/env"
 import { aiLimits } from "@/shared/config/limits"
-import type { LanguageModel } from "@/shared/ai"
+import { envFallbackKey, type LanguageModel } from "@/shared/ai"
+import { getWorkspaceAiKey } from "@/features/ai-keys"
 import { AppError } from "@/shared/lib/errors"
 import { runFfmpeg } from "@/shared/media"
 import { consumeRateLimit } from "@/shared/rate-limit"
@@ -79,7 +80,12 @@ export async function analyzeFootage(
       await saveFootageAnalysis(footageId, analysis)
     }
 
-    if (env.AI_VISION === "on" || model) {
+    // BYOK: descriptions run on the workspace's key (or the env fallback
+    // with AI_KEY_SOURCE=env). Without either, skip vision entirely
+    // instead of failing every moment.
+    const apiKey = await getWorkspaceAiKey(clip.workspaceId)
+    const canDescribe = Boolean(apiKey ?? envFallbackKey()) || !!model
+    if ((env.AI_VISION === "on" || model) && canDescribe) {
       // momentFrameArgs: at most 1280 wide, same shape, even height.
       const width = Math.min(1280, clip.width)
       const frameSize = {
@@ -114,6 +120,7 @@ export async function analyzeFootage(
             frame: await readFile(frame),
             size: frameSize,
             brandName: clip.brandKit.name,
+            apiKey,
             model,
           })
           await saveMomentInsight(marker.id, marker.atMs, insight)

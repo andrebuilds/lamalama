@@ -1,7 +1,7 @@
 {
   "name": "LamaLama",
   "short_name": "LamaLama",
-  "description": "Open-source browser video editor for product videos.",
+  "description": "Turn a screen recording into a product video that sells: AI-directed camera moves, text and motion graphics, right in your browser. Free and open source.",
   "start_url": "/",
   "icons": [
     {
@@ -15,7 +15,12 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
-  "display": "standalone"
+  "theme_color": "#faf9f5",
+  "background_color": "#faf9f5",
+  "display": "standalone",
+  "categories": [
+    "productivity",
+    "video",
+    "business"
+  ]
 }

@@ -17,7 +17,7 @@ export default async function VideoPage({
 }: PageProps<"/videos/[videoId]">) {
   const { videoId } = await params
   const { clips: showClips } = await searchParams
-  const { workspace, role } = await requireWorkspaceAccess("workspace:view")
+  const { workspace, actions } = await requireWorkspaceAccess("workspace:view")
   const video = await getProject(workspace.id, videoId)
   if (!video) notFound()
 
@@ -53,9 +53,10 @@ export default async function VideoPage({
         footage={{
           maxBytes: clipLimits.maxBytes,
           maxDurationSeconds: clipLimits.maxDurationSeconds,
-          canAdd: can(role, "content:create"),
+          canAdd: can(actions, "footage:upload"),
         }}
-        readOnly={!can(role, "content:edit")}
+        readOnly={!can(actions, "videos:manage")}
+        canExport={can(actions, "render:start")}
       />
     </>
   )

@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { useId, useState, useSyncExternalStore } from "react"
 
+import { AiKeyNotice, useAiStatus } from "@/shared/ai/ai-status"
 import { cn } from "@/shared/lib/utils"
 import {
   backgroundStyle,
@@ -919,6 +920,7 @@ export function DirectPanel({
   lastPlan: { reasoning: string; summary: string } | null
   onDirect: (instruction: string, scope: EditScope) => void
 }) {
+  const { ready: aiReady } = useAiStatus()
   const [instruction, setInstruction] = useState("")
   const [scope, setScope] = useState<(keyof EditScope)[]>([
     "camera",
@@ -1011,6 +1013,7 @@ export function DirectPanel({
       <Button
         type="submit"
         disabled={
+          !aiReady ||
           !hasMoments ||
           isDirecting ||
           !instruction.trim() ||
@@ -1024,6 +1027,7 @@ export function DirectPanel({
         )}
         {isDirecting ? "Directing the edit…" : "Direct with AI"}
       </Button>
+      <AiKeyNotice />
       {lastPlan && (
         <section
           className="flex flex-col gap-1.5 rounded-lg border bg-muted/40 p-3"

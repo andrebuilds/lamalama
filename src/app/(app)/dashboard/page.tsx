@@ -24,13 +24,13 @@ export const metadata: Metadata = { title: "Dashboard" }
 const recent = 6
 
 export default async function DashboardPage() {
-  const { user, workspace, role } = await getCurrentWorkspace()
+  const { user, workspace, actions } = await getCurrentWorkspace()
   const firstName = user.name.trim().split(/\s+/)[0]
   const [kits, projects] = await Promise.all([
     listBrandKits(workspace.id),
     listProjects(workspace.id, { take: recent + 1 }),
   ])
-  const canCreate = can(role, "content:create")
+  const canCreate = can(actions, "videos:manage")
 
   return (
     <div className="flex flex-1 flex-col gap-8">
@@ -73,7 +73,7 @@ export default async function DashboardPage() {
           </div>
           <ProjectsGrid
             projects={projects.slice(0, recent)}
-            canDelete={can(role, "content:edit")}
+            canDelete={can(actions, "videos:manage")}
           />
         </section>
       ) : (
@@ -93,7 +93,7 @@ export default async function DashboardPage() {
                 : "Paste your app’s website: we’ll pick up its colours, fonts and logo for your videos."}
             </EmptyDescription>
           </EmptyHeader>
-          {canCreate && (
+          {(kits.length > 0 ? canCreate : can(actions, "brandkits:manage")) && (
             <EmptyContent>
               {kits.length > 0 ? (
                 <NewProjectButton kits={kits} />

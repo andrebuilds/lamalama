@@ -1,10 +1,10 @@
 "use client"
 
-import { BuildingIcon, ChevronsUpDownIcon, UserIcon } from "lucide-react"
+import { ChevronsUpDownIcon, SettingsIcon } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar"
-import { Button } from "@/shared/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +22,8 @@ export type MenuUser = {
   name: string
   email: string
   image: string | null | undefined
+  /** The picked llama (settings → profile), shown in the open menu. */
+  mascot: { src: string; label: string } | null
 }
 
 function initials({ name, email }: MenuUser) {
@@ -62,24 +64,22 @@ function UserSummary({ user }: { user: MenuUser }) {
 }
 
 /**
- * The one user menu, used by both the sidebar and the header. `signOutItem`
- * is rendered by the server layout: importing it here would pull the auth
- * slice's server-only code into the browser.
+ * The sidebar-footer user menu. `signOutItem` is rendered by the server
+ * layout: importing it here would pull the auth slice's server-only code
+ * into the browser.
  */
 export function UserMenu({
   user,
   signOutItem,
-  variant,
 }: {
   user: MenuUser
   signOutItem: React.ReactNode
-  variant: "sidebar" | "header"
 }) {
   const { isMobile, setOpenMobile } = useSidebar()
   const closeMobileSidebar = () => isMobile && setOpenMobile(false)
 
-  const trigger =
-    variant === "sidebar" ? (
+  return (
+    <DropdownMenu>
       <DropdownMenuTrigger
         render={
           <SidebarMenuButton size="lg" className="aria-expanded:bg-muted" />
@@ -89,27 +89,9 @@ export function UserMenu({
         <UserSummary user={user} />
         <ChevronsUpDownIcon className="ml-auto" />
       </DropdownMenuTrigger>
-    ) : (
-      <DropdownMenuTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon-lg"
-            className="rounded-full"
-            aria-label="Open user menu"
-          />
-        }
-      >
-        <UserAvatar user={user} />
-      </DropdownMenuTrigger>
-    )
-
-  return (
-    <DropdownMenu>
-      {trigger}
       <DropdownMenuContent
         className="w-65 p-1.5"
-        side={variant === "sidebar" && !isMobile ? "right" : "bottom"}
+        side={isMobile ? "bottom" : "right"}
         align="end"
         sideOffset={8}
       >
@@ -118,26 +100,26 @@ export function UserMenu({
             <UserAvatar user={user} size="lg" />
             <UserSummary user={user} />
           </DropdownMenuLabel>
+          {user.mascot && (
+            <div className="flex justify-center px-2 pb-1">
+              <Image
+                src={user.mascot.src}
+                alt={`${user.mascot.label} llama`}
+                width={160}
+                height={160}
+                className="size-32 object-contain"
+              />
+            </div>
+          )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator className="my-1.5" />
         <DropdownMenuGroup>
           <DropdownMenuItem
             className={userMenuItemClass}
-            render={
-              <Link href="/settings/profile" onClick={closeMobileSidebar} />
-            }
+            render={<Link href="/settings" onClick={closeMobileSidebar} />}
           >
-            <UserIcon />
-            Profile
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className={userMenuItemClass}
-            render={
-              <Link href="/settings/workspace" onClick={closeMobileSidebar} />
-            }
-          >
-            <BuildingIcon />
-            Workspace settings
+            <SettingsIcon />
+            Settings
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator className="my-1.5" />

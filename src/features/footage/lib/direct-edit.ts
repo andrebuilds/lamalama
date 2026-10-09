@@ -152,12 +152,14 @@ export async function directEdit(input: {
     tone: string | null
     bannedWords: string[]
   }
+  apiKey?: string
   model?: LanguageModel
 }) {
   const brand = input.brand
   const output = await generateStructured({
     schema: editPlanSchema,
     system,
+    apiKey: input.apiKey,
     model: input.model,
     prompt: [
       `Brand: ${brand.name.slice(0, 80)}. ${brand.description.slice(0, 200)}`,

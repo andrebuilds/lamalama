@@ -37,7 +37,7 @@ export async function startExport(
     const parsed = startExportSchema.safeParse(input)
     if (!parsed.success) throw invalid()
     const { target, shape } = parsed.data
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("render:start")
     const render = await loadRenderInput(workspace.id, target, {
       linkSeconds: 60,
     })
@@ -103,7 +103,7 @@ export async function setShareLink(
     const parsed = shareLinkSchema.safeParse(input)
     if (!parsed.success) throw invalid()
     const { target, enabled } = parsed.data
-    const { workspace } = await requireWorkspaceAccess("content:edit")
+    const { workspace } = await requireWorkspaceAccess("render:start")
     await service.assertTarget(workspace.id, target)
     await service.setShareLink(workspace.id, target, enabled)
     return ok((await getExportPanel(workspace.id, target))!)

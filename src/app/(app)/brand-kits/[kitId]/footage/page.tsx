@@ -33,11 +33,11 @@ export default async function FootagePage({
   params,
 }: PageProps<"/brand-kits/[kitId]/footage">) {
   const { kitId } = await params
-  const { workspace, role } = await requireWorkspaceAccess("workspace:view")
+  const { workspace, actions } = await requireWorkspaceAccess("workspace:view")
   // The kit layout has already checked the kit is in this workspace.
   const clips = await withPosterUrls(await listFootage(workspace.id, kitId))
 
-  const canAdd = can(role, "content:create")
+  const canAdd = can(actions, "footage:upload")
   const isWorking = clips.some(
     (clip) => clip.status === "UPLOADING" || clip.status === "PROCESSING"
   )

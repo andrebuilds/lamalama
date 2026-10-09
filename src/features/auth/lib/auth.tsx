@@ -33,6 +33,9 @@ export const auth = betterAuth({
     additionalFields: {
       // Admin access (M11). input: false — sign-up can never set it.
       role: { type: "string", input: false, defaultValue: "USER" },
+      // Picked llama mascot (shown in the user menu). Only set through
+      // account/actions.ts; an unknown id simply renders no mascot.
+      mascot: { type: "string", required: false, input: false },
     },
   },
 

@@ -39,10 +39,17 @@ test.describe("signed in", () => {
 
   test("no accessibility violations with the user menu open", async ({
     page,
-    signedInUser: _user,
-  }) => {
+    signedInUser,
+  }, testInfo) => {
     await page.goto("/dashboard")
-    await page.getByRole("button", { name: "Open user menu" }).click()
+    if (testInfo.project.name === "mobile") {
+      await page.getByRole("button", { name: "Toggle Sidebar" }).click()
+    }
+    await page
+      .locator('[data-slot="sidebar"]')
+      .last()
+      .getByRole("button", { name: new RegExp(signedInUser.email) })
+      .click()
     await expect(page.getByRole("menu")).toBeVisible()
     await expectNoViolations(page)
   })

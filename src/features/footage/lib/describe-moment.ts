@@ -85,11 +85,13 @@ export async function describeMoment(input: {
   frame: Uint8Array
   size: { width: number; height: number }
   brandName: string
+  apiKey?: string
   model?: LanguageModel
 }) {
   const output = await generateStructured({
     schema: describeOutputSchema,
     system,
+    apiKey: input.apiKey,
     model: input.model,
     // Vision models place boxes best in pixels of a stated image size.
     prompt: `This is a ${input.size.width}×${input.size.height} pixel frame from a screen recording of ${cut(input.brandName, 80)}'s product. Describe this moment.`,

@@ -1,12 +1,16 @@
 import {
   Body,
   Button,
+  Column,
   Container,
   Head,
   Heading,
   Hr,
   Html,
+  Img,
   Preview,
+  Row,
+  Section,
   Text,
 } from "@react-email/components"
 
@@ -28,6 +32,12 @@ const styles = {
     padding: "32px",
   },
   heading: { color: "#15171C", fontSize: "20px", margin: "0 0 16px" },
+  brandName: {
+    color: "#15171C",
+    fontSize: "16px",
+    fontWeight: 600,
+    margin: 0,
+  },
   text: { color: "#15171C", fontSize: "14px", lineHeight: "22px" },
   button: {
     backgroundColor: "#15171C",
@@ -47,6 +57,24 @@ export function MagicLinkEmail({ url }: { url: string }) {
       <Preview>Your {site.name} sign-in link</Preview>
       <Body style={styles.body}>
         <Container style={styles.container}>
+          {/* Absolute URL: email clients can't load relative assets. The
+              favicon asset has thickened strokes, so it stays legible small. */}
+          <Section style={{ marginBottom: "20px" }}>
+            <Row>
+              <Column style={{ width: "40px" }}>
+                <Img
+                  src={`${site.url}/favicon/android-chrome-192x192.png`}
+                  width="32"
+                  height="32"
+                  alt=""
+                  style={{ display: "block" }}
+                />
+              </Column>
+              <Column>
+                <Text style={styles.brandName}>{site.name}</Text>
+              </Column>
+            </Row>
+          </Section>
           <Heading style={styles.heading}>Sign in to {site.name}</Heading>
           <Text style={styles.text}>
             Click the button below to sign in. The link expires in 5 minutes and

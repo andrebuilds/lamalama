@@ -35,13 +35,13 @@ export const metadata: Metadata = { title: "Footage" }
  * or uploading without first opening a brand kit.
  */
 export default async function AllFootagePage() {
-  const { workspace, role } = await requireWorkspaceAccess("workspace:view")
+  const { workspace, actions } = await requireWorkspaceAccess("workspace:view")
   const [kits, clips] = await Promise.all([
     listBrandKits(workspace.id),
     listFootage(workspace.id).then(withPosterUrls),
   ])
 
-  const canAdd = can(role, "content:create")
+  const canAdd = can(actions, "footage:upload")
   const isWorking = clips.some(
     (clip) => clip.status === "UPLOADING" || clip.status === "PROCESSING"
   )

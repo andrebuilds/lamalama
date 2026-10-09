@@ -1,6 +1,6 @@
 "use client"
 
-import { BuildingIcon, UserIcon } from "lucide-react"
+import { BuildingIcon, KeyIcon, UserIcon } from "lucide-react"
 import Link, { useLinkStatus } from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/shared/ui/tabs"
 const tabs = [
   { href: "/settings/profile", label: "Profile", icon: UserIcon },
   { href: "/settings/workspace", label: "Workspace", icon: BuildingIcon },
+  { href: "/settings/api-key", label: "API key", icon: KeyIcon },
 ]
 
 /**

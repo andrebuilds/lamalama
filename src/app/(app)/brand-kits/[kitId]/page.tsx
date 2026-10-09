@@ -21,7 +21,7 @@ export default async function BrandKitPage({
 }: PageProps<"/brand-kits/[kitId]">) {
   const { kitId } = await params
   const { draft } = await searchParams
-  const { workspace, role } = await requireWorkspaceAccess("workspace:view")
+  const { workspace, actions } = await requireWorkspaceAccess("workspace:view")
 
   const kit = await getBrandKit(workspace.id, kitId)
   if (!kit) notFound()
@@ -33,7 +33,7 @@ export default async function BrandKitPage({
   return (
     <div className="flex flex-col gap-8">
       {/* A new kit's next step, so no one has to find the tab. */}
-      {clipCount === 0 && can(role, "content:create") && (
+      {clipCount === 0 && can(actions, "footage:upload") && (
         <Alert>
           <FilmIcon />
           <AlertTitle>Next: add your footage</AlertTitle>
@@ -65,7 +65,7 @@ export default async function BrandKitPage({
       <BrandKitEditor
         kit={kit}
         logoUrl={logoUrl}
-        readOnly={!can(role, "content:edit")}
+        readOnly={!can(actions, "brandkits:manage")}
       />
     </div>
   )

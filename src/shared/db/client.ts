@@ -24,9 +24,22 @@ function createClient() {
   })
 }
 
-// Reuse one client across dev hot reloads so we don't leak connections.
-const globalForDb = globalThis as unknown as { db?: PrismaClient }
+// Reuse one client across dev hot reloads so we don't leak connections. A
+// `prisma generate` reloads the generated module with a new PrismaClient
+// class; the cached instance would lack the new models, so replace it.
+const globalForDb = globalThis as unknown as {
+  db?: PrismaClient
+  dbClass?: typeof PrismaClient
+}
+
+if (globalForDb.db && globalForDb.dbClass !== PrismaClient) {
+  void globalForDb.db.$disconnect()
+  globalForDb.db = undefined
+}
 
 export const db = globalForDb.db ?? createClient()
 
-if (process.env.NODE_ENV !== "production") globalForDb.db = db
+if (process.env.NODE_ENV !== "production") {
+  globalForDb.db = db
+  globalForDb.dbClass = PrismaClient
+}

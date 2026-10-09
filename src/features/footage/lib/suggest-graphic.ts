@@ -33,11 +33,13 @@ export async function suggestGraphic(input: {
   insight: MomentInsight | null
   label: string | null
   brandName: string
+  apiKey?: string
   model?: LanguageModel
 }): Promise<GraphicSuggestion> {
   const output = await generateStructured({
     schema: graphicSuggestionSchema,
     system,
+    apiKey: input.apiKey,
     model: input.model,
     prompt: [
       `Product: ${input.brandName.slice(0, 80)}`,

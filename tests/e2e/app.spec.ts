@@ -42,16 +42,12 @@ test("sidebar shows the workspace and navigates with real links", async ({
 
   await expect(sidebar.getByText("Ada’s workspace")).toBeVisible()
   // Nav items must be links, not buttons, for screen readers.
-  await sidebar.getByRole("link", { name: "Settings" }).click()
+  await sidebar.getByRole("link", { name: "Videos" }).click()
 
-  await expect(page).toHaveURL(/\/settings\/profile$/)
+  await expect(page).toHaveURL(/\/videos$/)
   await expect(
-    page.getByRole("heading", { level: 1, name: "Settings" })
+    page.getByRole("heading", { level: 1, name: "Videos" })
   ).toBeVisible()
-  await expect(page.getByRole("tab", { name: "Profile" })).toHaveAttribute(
-    "aria-selected",
-    "true"
-  )
   expect(consoleProblems).toEqual([])
 })
 
@@ -143,9 +139,9 @@ test("on mobile, the sidebar opens as a sheet and closes after navigating", asyn
 
   await page.getByRole("button", { name: "Toggle Sidebar" }).click()
   await expect(sheet).toBeVisible()
-  await sheet.getByRole("link", { name: "Settings" }).click()
+  await sheet.getByRole("link", { name: "Videos" }).click()
 
-  await expect(page).toHaveURL(/\/settings\/profile$/)
+  await expect(page).toHaveURL(/\/videos$/)
   await expect(sheet).toBeHidden()
 })
 
@@ -153,8 +149,9 @@ test("unknown pages show a helpful not-found page", async ({ page }) => {
   await page.goto("/this-does-not-exist")
 
   await expect(page.getByText("Page not found")).toBeVisible()
+  // Signed out, so the way home is the landing page, not the dashboard.
   await expect(
-    page.getByRole("link", { name: "Go to dashboard" })
+    page.getByRole("link", { name: "Back to the home page" })
   ).toBeVisible()
 })
 
@@ -230,22 +227,28 @@ test("settings tabs switch pages and show the active tab", async ({
   expect(consoleProblems).toEqual([])
 })
 
-test("the header user menu matches the sidebar menu", async ({
+test("the sidebar user menu opens the settings page", async ({
   page,
   signedInUser,
   consoleProblems,
-}) => {
+}, testInfo) => {
   await page.goto("/dashboard")
+  if (isMobile(testInfo.project.name)) {
+    await page.getByRole("button", { name: "Toggle Sidebar" }).click()
+  }
 
-  await page.getByRole("button", { name: "Open user menu" }).click()
+  await page
+    .locator('[data-slot="sidebar"]')
+    .last()
+    .getByRole("button", { name: new RegExp(signedInUser.email) })
+    .click()
   const menu = page.getByRole("menu")
 
   await expect(menu.getByText("Ada Lovelace")).toBeVisible()
   await expect(menu.getByText(signedInUser.email)).toBeVisible()
-  await expect(menu.getByRole("menuitem", { name: "Profile" })).toBeVisible()
   await expect(menu.getByRole("menuitem", { name: "Sign out" })).toBeVisible()
-  await menu.getByRole("menuitem", { name: "Workspace settings" }).click()
+  await menu.getByRole("menuitem", { name: "Settings" }).click()
 
-  await expect(page).toHaveURL(/\/settings\/workspace$/)
+  await expect(page).toHaveURL(/\/settings\/profile$/)
   expect(consoleProblems).toEqual([])
 })

@@ -3,11 +3,13 @@ import { expect, test } from "@playwright/test"
 test("home page shows the hero and auth buttons", async ({ page }) => {
   await page.goto("/")
 
-  await expect(page).toHaveTitle("LamaLama")
+  await expect(page).toHaveTitle(
+    "LamaLama: Turn screen recordings into product videos"
+  )
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "Your product, in videos that show it off.",
+      name: "Record your screen. Ship a video that sells.",
     })
   ).toBeVisible()
   const header = page.getByRole("banner")

@@ -21,5 +21,6 @@ export const config = {
     "/footage/:path*",
     "/brand-kits/:path*",
     "/settings/:path*",
+    "/welcome",
   ],
 }

@@ -18,6 +18,8 @@ export function fillPlaceholderEnv() {
     AI_TEXT_PROVIDER: "anthropic",
     AI_TEXT_MODEL: "test-model",
     ANTHROPIC_API_KEY: "sk-ant-x",
+    AI_KEY_SOURCE: "env",
+    APP_ENCRYPTION_KEY: "0".repeat(64),
     AWS_ACCESS_KEY_ID: "x",
     AWS_SECRET_ACCESS_KEY: "x",
     AWS_ENDPOINT_URL_S3: "https://storage.invalid",

@@ -5,6 +5,8 @@ export type AppErrorCode =
   | "PLAN_LIMIT"
   | "COMPLIANCE_BLOCKED"
   | "PROVIDER_FAILED"
+  // BYOK: the workspace has no AI key yet, or its key was rejected.
+  | "NO_API_KEY"
   | "RATE_LIMITED"
   | "VALIDATION"
   // Saved from a stale copy: someone (or another tab) saved since.

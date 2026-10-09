@@ -30,7 +30,19 @@ const envSchema = z.object({
   // provider here and in the registry together, with its own key below.
   AI_TEXT_PROVIDER: z.enum(["anthropic"]),
   AI_TEXT_MODEL: z.string().min(1),
-  ANTHROPIC_API_KEY: z.string().startsWith("sk-ant-"),
+  // BYOK: users bring their own key per workspace. This one is an optional
+  // fallback for development and CI only; production should not set it.
+  ANTHROPIC_API_KEY: z.string().startsWith("sk-ant-").optional(),
+  // "byok" (default) ignores ANTHROPIC_API_KEY, so a local key doesn't hide
+  // the no-key experience; "env" uses it as the fallback (CI, AI dev work).
+  AI_KEY_SOURCE: z.enum(["byok", "env"]).default("byok"),
+  // Encrypts workspace API keys at rest (AES-256-GCM).
+  APP_ENCRYPTION_KEY: z
+    .string()
+    .regex(
+      /^[0-9a-f]{64}$/i,
+      "Must be 64 hex characters (32 bytes). Generate one with: openssl rand -hex 32"
+    ),
   // "off" skips AI vision in the worker (describing key moments). Tests and
   // CI turn it off; unit tests cover it with a mock model.
   AI_VISION: z.enum(["on", "off"]).default("on"),

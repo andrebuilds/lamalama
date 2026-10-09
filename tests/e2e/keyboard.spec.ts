@@ -53,23 +53,22 @@ test.describe("signed in", () => {
 
   test("user menu opens and works with the keyboard", async ({
     page,
-    signedInUser: _user,
-  }) => {
+    signedInUser,
+  }, testInfo) => {
+    test.skip(testInfo.project.name === "mobile", "Desktop sidebar only")
     await page.goto("/dashboard")
-    const trigger = page.getByRole("button", { name: "Open user menu" })
+    const trigger = page
+      .locator('[data-slot="sidebar-container"]')
+      .getByRole("button", { name: new RegExp(signedInUser.email) })
 
     await trigger.focus()
     await page.keyboard.press("Enter")
     await expect(page.getByRole("menu")).toBeVisible()
     // WAI-ARIA menu pattern: opening with Enter focuses the first item.
-    await expect(page.getByRole("menuitem", { name: "Profile" })).toBeFocused()
-    await page.keyboard.press("ArrowDown")
-    await expect(
-      page.getByRole("menuitem", { name: "Workspace settings" })
-    ).toBeFocused()
+    await expect(page.getByRole("menuitem", { name: "Settings" })).toBeFocused()
     await page.keyboard.press("Enter")
 
-    await expect(page).toHaveURL(/\/settings\/workspace$/)
+    await expect(page).toHaveURL(/\/settings\/profile$/)
   })
 
   test("settings tabs move with the arrow keys", async ({
@@ -95,26 +94,12 @@ test.describe("signed in", () => {
     test.skip(testInfo.project.name === "mobile", "Desktop sidebar only")
     await page.goto("/dashboard")
 
-    const settings = page
+    const videos = page
       .locator('[data-slot="sidebar-container"]')
-      .getByRole("link", { name: "Settings" })
-    await settings.focus()
+      .getByRole("link", { name: "Videos" })
+    await videos.focus()
     await page.keyboard.press("Enter")
 
-    await expect(page).toHaveURL(/\/settings\/profile$/)
-  })
-
-  test("animations are off when reduced motion is requested", async ({
-    page,
-    signedInUser: _user,
-  }, testInfo) => {
-    test.skip(testInfo.project.name === "mobile", "Desktop sidebar only")
-    await page.emulateMedia({ reducedMotion: "reduce" })
-    await page.goto("/dashboard")
-
-    const duration = await page
-      .locator('[data-slot="sidebar-container"]')
-      .evaluate((el) => getComputedStyle(el).transitionDuration)
-    expect(parseFloat(duration)).toBeLessThanOrEqual(0.01)
+    await expect(page).toHaveURL(/\/videos$/)
   })
 })

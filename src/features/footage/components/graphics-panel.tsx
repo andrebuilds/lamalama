@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { useTransition } from "react"
 
+import { AiKeyNotice, useAiStatus } from "@/shared/ai/ai-status"
 import { cn } from "@/shared/lib/utils"
 import {
   graphicInfo,
@@ -137,6 +138,7 @@ export function GraphicsPanel({
   swatches: string[]
 }) {
   const [isAsking, startAsk] = useTransition()
+  const { ready: aiReady } = useAiStatus()
   const selected = items.find((item) => item.id === selectedId) ?? null
   const full = items.length >= graphicLimits.items
   const ordered = [...items].sort((a, b) => a.atMs - b.atMs)
@@ -177,7 +179,7 @@ export function GraphicsPanel({
           <Button
             type="button"
             variant="outline"
-            disabled={isAsking || full}
+            disabled={isAsking || full || !aiReady}
             onClick={() => startAsk(onAskAi)}
           >
             {isAsking ? (
@@ -187,7 +189,8 @@ export function GraphicsPanel({
             )}
             Let AI choose
           </Button>
-          {!moment.hasInsight && (
+          <AiKeyNotice className="bg-background" />
+          {aiReady && !moment.hasInsight && (
             <p className="text-xs text-muted-foreground">
               Tip: the AI chooses better once the footage is analysed (Moments
               tab).

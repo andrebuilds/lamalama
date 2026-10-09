@@ -3,11 +3,11 @@ import {
   FilmIcon,
   LayoutDashboardIcon,
   PaletteIcon,
-  SettingsIcon,
 } from "lucide-react"
 
 /**
  * Sidebar items: only pages that exist (§12.4), added as milestones ship.
+ * Settings lives in the user menu, not here.
  * Add each new top-level route to the matcher in src/proxy.ts too.
  */
 export const navItems = [
@@ -15,13 +15,13 @@ export const navItems = [
   { title: "Videos", href: "/videos", icon: ClapperboardIcon },
   { title: "Footage", href: "/footage", icon: FilmIcon },
   { title: "Brand kits", href: "/brand-kits", icon: PaletteIcon },
-  { title: "Settings", href: "/settings", icon: SettingsIcon },
 ] as const
 
 /** Top bar titles, most specific path first. */
 const pageTitles: { prefix: string; title: string }[] = [
-  { prefix: "/settings/profile", title: "Profile" },
-  { prefix: "/settings/workspace", title: "Workspace" },
+  { prefix: "/settings/profile", title: "Profile settings" },
+  { prefix: "/settings/workspace", title: "Workspace settings" },
+  { prefix: "/settings/api-key", title: "API key settings" },
   { prefix: "/settings", title: "Settings" },
   { prefix: "/dashboard", title: "Dashboard" },
   { prefix: "/videos", title: "Videos" },

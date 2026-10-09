@@ -278,6 +278,8 @@ export function FootageEditor({
   initialPresentation,
   brandColors,
   readOnly,
+  canDelete,
+  canExport,
   kitId,
   kitName,
   kitFonts,
@@ -293,6 +295,9 @@ export function FootageEditor({
   initialPresentation: Presentation
   brandColors: string[]
   readOnly: boolean
+  canDelete: boolean
+  /** Render and share: its own permission, apart from editing. */
+  canExport: boolean
   kitId: string
   kitName: string
   /** The brand kit's fonts (names from the ad font list). */
@@ -1352,9 +1357,9 @@ export function FootageEditor({
                 : { kind: "clip", id: clip.id }
             }
             defaultShape={aspect}
-            canEdit={!readOnly}
+            canEdit={canExport}
           />
-          {!readOnly && !video && (
+          {canDelete && !video && (
             <DeleteClipButton
               footageId={clip.id}
               clipName={clip.name}

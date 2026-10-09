@@ -1,0 +1,44 @@
+# LamaLama
+
+> LamaLama is a free, open-source (MIT) video editor that runs in the browser and turns a plain screen recording into a polished product video. You record or upload your app, an AI finds the key moments and directs a first cut (camera moves on a 3D stage, text, motion graphics), you polish it in a real editor, then export an MP4 in 16:9, 9:16, 1:1 or 4:5 or share a public link.
+
+Who it's for: founders, indie hackers, product and marketing teams who need launch videos, feature announcements, walkthroughs and social clips without an editor, an agency or desktop software.
+
+Key facts:
+
+- Price: free. AI features use the workspace's own Anthropic API key (bring your own key), stored encrypted at rest; every manual tool works without one.
+- Runs in the browser: recording, editing and preview. Exports render on the server as MP4.
+- Clips: up to 10 minutes and 1 GB each.
+- Teams: shared workspaces with Owner, Admin, Editor and Viewer roles, or custom per-member permissions.
+- Sign in with Google, GitHub or an email magic link.
+- Self-hostable: Next.js, PostgreSQL, any S3-compatible bucket and a background worker. Rendering uses Remotion, which has its own licence (free for individuals and companies of up to 3 people).
+- Created and maintained by Andrea D'Ambrosio (https://github.com/andrebuilds).
+
+## Product
+
+- [Home page](https://lamalama.video/): what LamaLama does
+- [Create a free account](https://lamalama.video/sign-up): start making videos
+- [Sign in](https://lamalama.video/sign-in)
+
+## Features
+
+- Brand kits: colours, fonts and logo, drafted automatically from a website
+- Footage: in-browser screen recording or uploads; analysis finds the key moments
+- Motion studio: camera moves, cuts, speed, transitions, text, motion graphics, layouts, lens looks, an AI director and a full-screen preview
+- Videos: clips joined in order with transitions, with versioned saves
+- Export and share: MP4 in every aspect ratio, or a revocable public share link
+
+## Docs
+
+- [README](https://github.com/andrebuilds/lamalama/blob/main/README.md): features, tech stack, setup, configuration and self-hosting
+- [Contributing guide](https://github.com/andrebuilds/lamalama/blob/main/CONTRIBUTING.md): architecture and how to send changes
+- [Changelog](https://github.com/andrebuilds/lamalama/blob/main/CHANGELOG.md)
+
+## Optional
+
+- [Source code on GitHub](https://github.com/andrebuilds/lamalama)
+- [Report a bug](https://github.com/andrebuilds/lamalama/issues/new?template=bug_report.yml)
+- [Security policy](https://github.com/andrebuilds/lamalama/blob/main/SECURITY.md)
+- [MIT License](https://github.com/andrebuilds/lamalama/blob/main/LICENSE)
+- [Remotion licence](https://www.remotion.dev/license)
+- Contact: hello@lamalama.video

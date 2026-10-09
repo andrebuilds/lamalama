@@ -129,7 +129,10 @@ describe.runIf(hasDatabase)("brand kit actions", () => {
       const result = await fromUrl("acme.app")
 
       expect(result).toMatchObject({ ok: true, data: { isComplete: true } })
-      expect(draftKitFromUrl).toHaveBeenCalledWith("https://acme.app/")
+      // No saved key in the test workspace: the draft gets none to use.
+      expect(draftKitFromUrl).toHaveBeenCalledWith("https://acme.app/", {
+        apiKey: undefined,
+      })
       const kit = await db.brandKit.findFirstOrThrow({ where: { workspaceId } })
       expect(kit.name).toBe("Acme")
       expect(kit.logoKey).toMatch(
