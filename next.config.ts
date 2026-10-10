@@ -1,13 +1,19 @@
 import type { NextConfig } from "next"
 
 /**
- * Baseline security headers for every response. A Content-Security-Policy
- * (needs nonces for Next's inline scripts) and HSTS (needs the production
- * HTTPS domain) are added at deployment, after M12.
+ * Baseline security headers for every response. A full
+ * Content-Security-Policy for scripts needs nonces for Next's inline
+ * scripts (every page dynamic), so it stays a later step; this one only
+ * covers what needs no nonce.
  */
 const securityHeaders = [
-  // Nobody may embed LamaLama in a frame (clickjacking).
+  // Nobody may embed LamaLama in a frame (clickjacking). X-Frame-Options
+  // for older browsers, frame-ancestors for current ones.
   { key: "X-Frame-Options", value: "DENY" },
+  {
+    key: "Content-Security-Policy",
+    value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
+  },
   // Browsers must not guess content types.
   { key: "X-Content-Type-Options", value: "nosniff" },
   // Send only the origin to other sites, never full URLs.
@@ -18,6 +24,16 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=(), display-capture=(self)",
   },
+  // HTTPS only, for a year, once the app runs on HTTPS (not on localhost,
+  // where it would stick to every local project).
+  ...(process.env.NEXT_PUBLIC_APP_URL?.startsWith("https://")
+    ? [
+        {
+          key: "Strict-Transport-Security",
+          value: "max-age=31536000; includeSubDomains",
+        },
+      ]
+    : []),
 ]
 
 // The app's own host. www.<host> redirects to it: one canonical address
@@ -30,6 +46,16 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   // Don't advertise the framework in an X-Powered-By header.
   poweredByHeader: false,
+  images: {
+    // The footer's author avatar. next/image fetches it server-side, so
+    // visitors' browsers (and IP addresses) never reach GitHub.
+    // Object form, not new URL(): avatar URLs carry a query (?v=4) and a
+    // URL pattern would only match an empty one.
+    remotePatterns: [
+      { protocol: "https", hostname: "avatars.githubusercontent.com" },
+      { protocol: "https", hostname: "github.com" },
+    ],
+  },
   experimental: {
     serverActions: {
       // Logo uploads are up to 2 MB; the limit counts the raw multipart

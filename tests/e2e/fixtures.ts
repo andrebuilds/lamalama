@@ -61,8 +61,8 @@ export const test = base.extend<{
     const value = cookie.split(";")[0].split("=").slice(1).join("=")
     await context.addCookies([
       { name: "better-auth.session_token", value, url: baseURL! },
-      // Skips the one-time BYOK /welcome screen.
-      { name: "byok_welcome_seen", value: "1", url: baseURL! },
+      // Skips the one-time BYOK /welcome screen (the cookie holds the user id).
+      { name: "byok_welcome_seen", value: user.id, url: baseURL! },
     ])
 
     await use(user)

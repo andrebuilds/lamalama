@@ -7,7 +7,7 @@ import { z } from "zod"
 import { getBrandKit } from "@/features/brand-kits"
 import { getWorkspaceAiKey } from "@/features/ai-keys"
 import { requireWorkspaceAccess } from "@/features/workspaces"
-import { aiLimits } from "@/shared/config/limits"
+import { aiLimits, userLimits } from "@/shared/config/limits"
 import { enqueue } from "@/shared/jobs"
 import { AppError } from "@/shared/lib/errors"
 import { err, ok, toResultError, type Result } from "@/shared/lib/result"
@@ -75,7 +75,13 @@ export async function requestFootageUpload(
     const parsed = requestUploadSchema.safeParse(input)
     if (!parsed.success) throw invalid(parsed.error, "Check the file.")
 
-    const { workspace } = await requireWorkspaceAccess("footage:upload")
+    const { user, workspace } = await requireWorkspaceAccess("footage:upload")
+    await consumeRateLimit({
+      key: `clip-uploads:${user.id}`,
+      limit: userLimits.clipUploadsPerDay,
+      windowSeconds: 24 * 60 * 60,
+      message: `You’ve added ${userLimits.clipUploadsPerDay} clips today. Try again tomorrow.`,
+    })
     const { footageId, originalKey } = await service.createFootageUpload(
       workspace.id,
       parsed.data

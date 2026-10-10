@@ -15,6 +15,17 @@ export default defineConfig({
   use: {
     baseURL,
     trace: "on-first-retry",
+    // Start with the cookie notice already dismissed, so the fixed card never
+    // covers what a test clicks. legal.spec.ts opts back in to test it.
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: baseURL,
+          localStorage: [{ name: "lamalama:cookie-notice", value: "e2e" }],
+        },
+      ],
+    },
   },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },

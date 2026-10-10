@@ -1,1 +1,7 @@
-export { MediaToolError, probeVideo, runFfmpeg, type VideoInfo } from "./ffmpeg"
+export {
+  MediaToolError,
+  probeVideo,
+  runFfmpeg,
+  untrustedInputArgs,
+  type VideoInfo,
+} from "./ffmpeg"

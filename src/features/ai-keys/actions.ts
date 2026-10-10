@@ -5,12 +5,20 @@ import { cookies } from "next/headers"
 import { redirect, unstable_rethrow } from "next/navigation"
 import { z } from "zod"
 
+import { requireUser } from "@/features/auth"
 import { requireWorkspaceAccess } from "@/features/workspaces"
+import { env } from "@/shared/config/env"
+import { userLimits } from "@/shared/config/limits"
 import { AppError } from "@/shared/lib/errors"
 import { err, ok, toResultError, type Result } from "@/shared/lib/result"
+import { consumeRateLimit } from "@/shared/rate-limit"
 
 import { saveApiKeySchema } from "./schema"
-import { removeWorkspaceKey, saveWorkspaceKey } from "./service"
+import {
+  BYOK_WELCOME_COOKIE,
+  removeWorkspaceKey,
+  saveWorkspaceKey,
+} from "./service"
 
 /** Validates the key against Anthropic, encrypts and stores it. */
 export async function saveApiKey(
@@ -27,7 +35,15 @@ export async function saveApiKey(
       })
     }
 
-    const { workspace } = await requireWorkspaceAccess("apikey:manage")
+    const { user, workspace } = await requireWorkspaceAccess("apikey:manage")
+    // Each save asks Anthropic whether the key works; without a cap the
+    // form could be used to test stolen keys.
+    await consumeRateLimit({
+      key: `api-key-checks:${user.id}`,
+      limit: userLimits.apiKeyChecksPerHour,
+      windowSeconds: 60 * 60,
+      message: "Too many keys tried. Wait an hour and try again.",
+    })
     const { hint } = await saveWorkspaceKey(workspace.id, parsed.data.apiKey)
 
     // The missing-key banner shows in the app layout; refresh everything.
@@ -52,13 +68,20 @@ export async function removeApiKey(): Promise<Result<{ removed: true }>> {
   }
 }
 
-/** "I'll do it later" on /welcome: remember the choice, go to the app. */
+/**
+ * "I'll do it later" on /welcome: remember the choice, go to the app. The
+ * cookie holds the user's id, so another account signing up in the same
+ * browser still sees /welcome.
+ */
 export async function skipByokWelcome(): Promise<void> {
+  const { user } = await requireUser()
   const jar = await cookies()
-  jar.set("byok_welcome_seen", "1", {
+  jar.set(BYOK_WELCOME_COOKIE, user.id, {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
+    httpOnly: true,
+    secure: env.BETTER_AUTH_URL.startsWith("https://"),
   })
   redirect("/dashboard")
 }

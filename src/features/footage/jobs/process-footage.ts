@@ -5,7 +5,12 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { enqueue } from "@/shared/jobs"
-import { MediaToolError, probeVideo, runFfmpeg } from "@/shared/media"
+import {
+  MediaToolError,
+  probeVideo,
+  runFfmpeg,
+  untrustedInputArgs,
+} from "@/shared/media"
 import { downloadToFile, uploadFromFile } from "@/shared/storage"
 
 import { clipLimits, tooLongMessage } from "../lib/limits"
@@ -72,7 +77,12 @@ export async function processFootage(
     }
 
     const video = join(dir, "video.mp4")
-    await convert(transcodeArgs(original, video), minutes(25), signal)
+    // The user's file is read only here; later steps read our transcode.
+    await convert(
+      [...untrustedInputArgs, ...transcodeArgs(original, video)],
+      minutes(25),
+      signal
+    )
     const converted = await probeVideo(video, { signal })
     if (!converted) throw new UnusableFootage(messages.convertFailed)
     if (isTooLong(converted.durationMs)) {

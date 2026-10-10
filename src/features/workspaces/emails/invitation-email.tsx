@@ -1,64 +1,19 @@
 import {
   Body,
   Button,
-  Column,
   Container,
   Head,
   Heading,
   Hr,
   Html,
-  Img,
   Preview,
-  Row,
-  Section,
   Text,
 } from "@react-email/components"
 
 import { site } from "@/shared/config/site"
 import type { MemberRole } from "@/shared/db"
 
-// Email clients ignore stylesheets, so styles are inline (same look as
-// the magic-link email).
-const styles = {
-  body: {
-    backgroundColor: "#EEF0F3",
-    fontFamily:
-      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
-    padding: "32px 0",
-  },
-  container: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: "10px",
-    margin: "0 auto",
-    maxWidth: "480px",
-    padding: "32px",
-  },
-  heading: { color: "#15171C", fontSize: "20px", margin: "0 0 16px" },
-  brandName: {
-    color: "#15171C",
-    fontSize: "16px",
-    fontWeight: 600,
-    margin: 0,
-  },
-  text: { color: "#15171C", fontSize: "14px", lineHeight: "22px" },
-  button: {
-    backgroundColor: "#15171C",
-    borderRadius: "8px",
-    color: "#FFFFFF",
-    fontSize: "14px",
-    fontWeight: 500,
-    padding: "10px 16px",
-  },
-  muted: { color: "#5B6170", fontSize: "12px", lineHeight: "18px" },
-} as const
-
-const roleText: Record<MemberRole, string> = {
-  OWNER: "an owner",
-  ADMIN: "an admin",
-  EDITOR: "an editor",
-  VIEWER: "a viewer",
-  CUSTOM: "a member",
-}
+import { EmailHeader, roleText, styles } from "./email-parts"
 
 export function InvitationEmail({
   url,
@@ -79,22 +34,7 @@ export function InvitationEmail({
       </Preview>
       <Body style={styles.body}>
         <Container style={styles.container}>
-          <Section style={{ marginBottom: "20px" }}>
-            <Row>
-              <Column style={{ width: "40px" }}>
-                <Img
-                  src={`${site.url}/favicon/android-chrome-192x192.png`}
-                  width="32"
-                  height="32"
-                  alt=""
-                  style={{ display: "block" }}
-                />
-              </Column>
-              <Column>
-                <Text style={styles.brandName}>{site.name}</Text>
-              </Column>
-            </Row>
-          </Section>
+          <EmailHeader />
           <Heading style={styles.heading}>
             Join {workspaceName} on {site.name}
           </Heading>
@@ -105,7 +45,7 @@ export function InvitationEmail({
           <Button href={url} style={styles.button}>
             Accept invitation
           </Button>
-          <Hr style={{ borderColor: "#D5D9E0", margin: "24px 0" }} />
+          <Hr style={styles.hr} />
           <Text style={styles.muted}>
             The invitation expires in 7 days and only works for this email
             address. No account yet? Sign up with this address first, then open

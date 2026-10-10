@@ -14,7 +14,10 @@ import { decryptSecret, encryptSecret } from "@/shared/lib/secrets"
 
 const provider = () => env.AI_TEXT_PROVIDER
 
-/** Set when /welcome was shown and skipped; the layout stops redirecting. */
+/**
+ * Set when /welcome was shown and skipped; the layout stops redirecting.
+ * Holds the user's id: the browser may be shared by several accounts.
+ */
 export const BYOK_WELCOME_COOKIE = "byok_welcome_seen"
 
 const whereKey = (workspaceId: string) => ({

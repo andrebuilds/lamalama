@@ -102,32 +102,23 @@ export async function getExportPanel(
 /**
  * What a public share link plays: the target's newest finished export in
  * any shape. Null when the link doesn't exist or is off; `video` is null
- * while nothing has been exported yet.
+ * while nothing has been exported yet. No poster: clip posters come from
+ * the raw recording, before blur and cuts, so they could show what the
+ * edit hides.
  */
 export async function getSharedVideo(token: string) {
   const link = await db.shareLink.findUnique({
     where: { token },
     select: {
       enabled: true,
-      footage: { select: { name: true, posterKey: true } },
-      project: {
-        select: {
-          name: true,
-          clips: {
-            orderBy: { position: "asc" },
-            take: 1,
-            select: { footage: { select: { posterKey: true } } },
-          },
-        },
-      },
+      footage: { select: { name: true } },
+      project: { select: { name: true } },
       footageId: true,
       projectId: true,
     },
   })
   if (!link?.enabled) return null
   const name = link.footage?.name ?? link.project?.name ?? "Video"
-  const posterKey =
-    link.footage?.posterKey ?? link.project?.clips[0]?.footage.posterKey ?? null
 
   const latest = await db.export.findFirst({
     where: {
@@ -143,7 +134,6 @@ export async function getSharedVideo(token: string) {
   const linkSeconds = 6 * hour
   return {
     name,
-    posterUrl: posterKey ? await signedFileUrl(posterKey, linkSeconds) : null,
     video: latest?.fileKey
       ? {
           url: await signedFileUrl(latest.fileKey, linkSeconds),

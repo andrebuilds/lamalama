@@ -6,6 +6,8 @@ import { redirect, unstable_rethrow } from "next/navigation"
 import { z } from "zod"
 
 import { requireUser } from "@/features/auth"
+import { env } from "@/shared/config/env"
+import { userLimits } from "@/shared/config/limits"
 import { site } from "@/shared/config/site"
 import type { MemberRole } from "@/shared/db"
 import { sendEmail } from "@/shared/email"
@@ -14,7 +16,9 @@ import { err, ok, toResultError, type Result } from "@/shared/lib/result"
 import { consumeRateLimit } from "@/shared/rate-limit"
 import { deleteFolder } from "@/shared/storage"
 
+import { InvitationAcceptedEmail } from "./emails/invitation-accepted-email"
 import { InvitationEmail } from "./emails/invitation-email"
+import { JoinedWorkspaceEmail } from "./emails/joined-workspace-email"
 import { ACTIVE_WORKSPACE_COOKIE, requireWorkspaceAccess } from "./queries"
 import {
   changeMemberAccessSchema,
@@ -31,6 +35,8 @@ const cookieOptions = {
   maxAge: 60 * 60 * 24 * 365,
   sameSite: "lax",
   httpOnly: true,
+  // HTTPS only wherever the app runs on HTTPS, like the session cookie.
+  secure: env.BETTER_AUTH_URL.startsWith("https://"),
 } as const
 
 /**
@@ -84,6 +90,12 @@ export async function createWorkspace(
     }
 
     const { user } = await requireUser()
+    await consumeRateLimit({
+      key: `workspaces:${user.id}`,
+      limit: userLimits.workspacesPerDay,
+      windowSeconds: 24 * 60 * 60,
+      message: `You’ve created ${userLimits.workspacesPerDay} workspaces today. Try again tomorrow.`,
+    })
     const created = await service.createWorkspace(user.id, parsed.data.name)
     ;(await cookies()).set(ACTIVE_WORKSPACE_COOKIE, created.id, cookieOptions)
 
@@ -161,6 +173,12 @@ export async function inviteMember(
       limit: invitesPerDay,
       windowSeconds: 24 * 60 * 60,
       message: `You’ve sent ${invitesPerDay} invitations today. Try again tomorrow.`,
+    })
+    await consumeRateLimit({
+      key: `invites-by-user:${user.id}`,
+      limit: userLimits.invitesPerDay,
+      windowSeconds: 24 * 60 * 60,
+      message: `You’ve sent ${userLimits.invitesPerDay} invitations today. Try again tomorrow.`,
     })
 
     const invitation = await service.createInvitation({
@@ -281,12 +299,64 @@ export async function acceptInvitation(
       throw new AppError("NOT_FOUND", "This invitation doesn’t exist.")
 
     const { user } = await requireUser()
-    const workspace = await service.acceptInvitation(parsed.data, user)
+    const { workspace, role, inviter } = await service.acceptInvitation(
+      parsed.data,
+      user
+    )
     ;(await cookies()).set(ACTIVE_WORKSPACE_COOKIE, workspace.id, cookieOptions)
+    await sendAcceptedEmails({ member: user, inviter, workspace, role })
     revalidatePath("/", "layout")
   } catch (error) {
     unstable_rethrow(error)
     return err(toResultError(error))
   }
   redirect("/dashboard")
+}
+
+/**
+ * Confirms the membership to the new member and tells the inviter. The
+ * member has joined either way, so a failed send is only logged.
+ */
+async function sendAcceptedEmails({
+  member,
+  inviter,
+  workspace,
+  role,
+}: {
+  member: { name: string; email: string }
+  inviter: { name: string; email: string }
+  workspace: { name: string }
+  role: MemberRole
+}) {
+  const memberName = member.name || member.email
+  const inviterName = inviter.name || inviter.email
+  const results = await Promise.allSettled([
+    sendEmail({
+      to: member.email,
+      subject: `You’re now a member of ${workspace.name} on ${site.name}`,
+      react: (
+        <JoinedWorkspaceEmail
+          workspaceName={workspace.name}
+          inviterName={inviterName}
+          role={role}
+        />
+      ),
+    }),
+    sendEmail({
+      to: inviter.email,
+      subject: `${memberName} joined ${workspace.name} on ${site.name}`,
+      react: (
+        <InvitationAcceptedEmail
+          memberName={memberName}
+          workspaceName={workspace.name}
+          role={role}
+        />
+      ),
+    }),
+  ])
+  for (const result of results) {
+    if (result.status === "rejected") {
+      console.warn("Couldn't send an invitation-accepted email", result.reason)
+    }
+  }
 }

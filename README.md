@@ -29,16 +29,16 @@ let the AI direct the first cut, polish it in a real editor, then export an MP4 
 
 ## Why LamaLama?
 
-Founders need polished product videos all the time: launches, feature announcements, walkthroughs, social clips. Screen recorders capture the raw footage, but turning it into something that looks *directed* takes an editor's skills and hours in heavyweight desktop tools.
+Founders need polished product videos all the time: launches, feature announcements, walkthroughs, social clips. Screen recorders capture the raw footage, but turning it into something that looks _directed_ takes an editor's skills and hours in heavyweight desktop tools.
 
 LamaLama does the directing for you, right in the browser.
 
-| Pain | LamaLama's answer |
-|---|---|
+| Pain                            | LamaLama's answer                                                                                                          |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | Raw screen recordings look flat | A 3D stage with a camera that moves to what matters, plus cuts, speed, transitions, text, motion graphics and lens effects |
-| Editing takes skill and time | AI analyses the footage, finds the key moments and directs a first cut |
-| Desktop editors are heavy | Everything runs in the browser and saves as you go |
-| Getting the video out | Export an MP4 in every shape (16:9, 9:16, 1:1, 4:5) or share a link anyone can watch |
+| Editing takes skill and time    | AI analyses the footage, finds the key moments and directs a first cut                                                     |
+| Desktop editors are heavy       | Everything runs in the browser and saves as you go                                                                         |
+| Getting the video out           | Export an MP4 in every shape (16:9, 9:16, 1:1, 4:5) or share a link anyone can watch                                       |
 
 ## Features
 
@@ -62,18 +62,18 @@ Press **Make it rain** in the dashboard header. You're welcome.
 
 ## Tech stack
 
-| Concern | Choice |
-|---|---|
-| Framework | [Next.js 16](https://nextjs.org) (App Router, Server Components, Server Actions), React 19, TypeScript (strict) |
-| Database | PostgreSQL ([Neon](https://neon.tech) recommended) + [Prisma 7](https://www.prisma.io) |
-| Auth | [Better Auth](https://www.better-auth.com) |
-| UI | [Tailwind CSS 4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com) |
-| Video | [Remotion](https://www.remotion.dev) for composition, preview and rendering; ffmpeg for processing |
-| AI | [Vercel AI SDK](https://ai-sdk.dev) (Anthropic by default, provider-agnostic) |
-| Background jobs | [pg-boss](https://github.com/timgit/pg-boss) queue in Postgres, run by our own worker |
-| Storage | Any S3-compatible bucket (Neon Object Storage by default) |
-| Email | [Resend](https://resend.com) + React Email |
-| Testing | Vitest, Playwright, axe |
+| Concern         | Choice                                                                                                          |
+| --------------- | --------------------------------------------------------------------------------------------------------------- |
+| Framework       | [Next.js 16](https://nextjs.org) (App Router, Server Components, Server Actions), React 19, TypeScript (strict) |
+| Database        | PostgreSQL ([Neon](https://neon.tech) recommended) + [Prisma 7](https://www.prisma.io)                          |
+| Auth            | [Better Auth](https://www.better-auth.com)                                                                      |
+| UI              | [Tailwind CSS 4](https://tailwindcss.com) + [shadcn/ui](https://ui.shadcn.com)                                  |
+| Video           | [Remotion](https://www.remotion.dev) for composition, preview and rendering; ffmpeg for processing              |
+| AI              | [Vercel AI SDK](https://ai-sdk.dev) (Anthropic by default, provider-agnostic)                                   |
+| Background jobs | [pg-boss](https://github.com/timgit/pg-boss) queue in Postgres, run by our own worker                           |
+| Storage         | Any S3-compatible bucket (Neon Object Storage by default)                                                       |
+| Email           | [Resend](https://resend.com) + React Email                                                                      |
+| Testing         | Vitest, Playwright, axe                                                                                         |
 
 ## Getting started
 
@@ -131,44 +131,44 @@ Footage processing, AI analysis and exports run in the **worker**. `npm run dev`
 
 Every variable is listed in [`.env.example`](.env.example) and validated at startup by [`src/shared/config/env-schema.ts`](src/shared/config/env-schema.ts) — a missing or malformed value fails fast with its name.
 
-| Variable | Purpose |
-|---|---|
-| `DATABASE_URL` | Pooled Postgres connection for the app |
-| `DATABASE_URL_UNPOOLED` | Direct connection for migrations and the job worker |
-| `BETTER_AUTH_SECRET` | At least 32 characters: `openssl rand -base64 32` |
-| `BETTER_AUTH_URL` | The app's base URL, e.g. `http://localhost:3000` |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth |
-| `RESEND_API_KEY` / `EMAIL_FROM` | Magic-link emails, e.g. `LamaLama <hello@yourdomain.com>` |
-| `AI_TEXT_PROVIDER` / `AI_TEXT_MODEL` | AI provider and model id |
-| `ANTHROPIC_API_KEY` / `AI_KEY_SOURCE` | Optional fallback key for development and CI. Used only with `AI_KEY_SOURCE=env`; the default `byok` counts only keys saved in a workspace |
-| `APP_ENCRYPTION_KEY` | 64 hex characters that encrypt workspace API keys at rest: `openssl rand -hex 32`. Keep it safe: changing it makes saved keys unreadable |
-| `AI_VISION` | `on` (default) or `off` to skip AI descriptions of key moments |
-| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_ENDPOINT_URL_S3` / `AWS_REGION` | S3-compatible storage |
-| `REMOTION_LICENSE_KEY` | Optional, see [Remotion licence](#remotion-licence) |
-| `NEXT_PUBLIC_APP_URL` | Public URL of the app |
+| Variable                                                                             | Purpose                                                                                                                                    |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`                                                                       | Pooled Postgres connection for the app                                                                                                     |
+| `DATABASE_URL_UNPOOLED`                                                              | Direct connection for migrations and the job worker                                                                                        |
+| `BETTER_AUTH_SECRET`                                                                 | At least 32 characters: `openssl rand -base64 32`                                                                                          |
+| `BETTER_AUTH_URL`                                                                    | The app's base URL, e.g. `http://localhost:3000`                                                                                           |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`                                          | Google OAuth                                                                                                                               |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`                                          | GitHub OAuth                                                                                                                               |
+| `RESEND_API_KEY` / `EMAIL_FROM`                                                      | Magic-link emails, e.g. `LamaLama <hello@yourdomain.com>`                                                                                  |
+| `AI_TEXT_PROVIDER` / `AI_TEXT_MODEL`                                                 | AI provider and model id                                                                                                                   |
+| `ANTHROPIC_API_KEY` / `AI_KEY_SOURCE`                                                | Optional fallback key for development and CI. Used only with `AI_KEY_SOURCE=env`; the default `byok` counts only keys saved in a workspace |
+| `APP_ENCRYPTION_KEY`                                                                 | 64 hex characters that encrypt workspace API keys at rest: `openssl rand -hex 32`. Keep it safe: changing it makes saved keys unreadable   |
+| `AI_VISION`                                                                          | `on` (default) or `off` to skip AI descriptions of key moments                                                                             |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_ENDPOINT_URL_S3` / `AWS_REGION` | S3-compatible storage                                                                                                                      |
+| `REMOTION_LICENSE_KEY`                                                               | Optional, see [Remotion licence](#remotion-licence)                                                                                        |
+| `NEXT_PUBLIC_APP_URL`                                                                | Public URL of the app                                                                                                                      |
 
-App-wide safety limits (clip size and length, daily AI and export budgets) live in [`src/shared/config/limits.ts`](src/shared/config/limits.ts).
+App-wide safety limits (clip size and length, daily AI and export budgets, per-user daily caps) live in [`src/shared/config/limits.ts`](src/shared/config/limits.ts).
 
 ## Scripts
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Dev server and job worker together (worker restarts on change) |
-| `npm run dev:web` | Dev server only (queued jobs wait until a worker runs) |
-| `npm run worker` | Start the job worker alone |
-| `npm run build` / `npm start` | Production build / serve it |
-| `npm run lint` | ESLint, including slice-boundary rules |
-| `npm run typecheck` | TypeScript, no emit |
-| `npm run format` | Prettier |
-| `npm test` | Vitest unit tests; database tests run when `DATABASE_URL` is set |
-| `npm run test:watch` | Vitest in watch mode |
-| `npm run test:e2e` | Playwright on desktop and 375px mobile (first run: `npx playwright install chromium`) |
-| `npm run db:migrate -- --name <name>` | Create and apply a migration, then regenerate the Prisma client |
-| `npm run db:deploy` | Apply existing migrations |
-| `npm run db:generate` | Regenerate the Prisma client |
-| `npm run db:studio` | Browse the database |
-| `npm run storage:cors` | Let browsers upload to the bucket: sets its CORS, or checks it where the store manages CORS (Neon). `-- --create-bucket` for a local S3 server |
+| Command                               | What it does                                                                                                                                   |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                         | Dev server and job worker together (worker restarts on change)                                                                                 |
+| `npm run dev:web`                     | Dev server only (queued jobs wait until a worker runs)                                                                                         |
+| `npm run worker`                      | Start the job worker alone                                                                                                                     |
+| `npm run build` / `npm start`         | Production build / serve it                                                                                                                    |
+| `npm run lint`                        | ESLint, including slice-boundary rules                                                                                                         |
+| `npm run typecheck`                   | TypeScript, no emit                                                                                                                            |
+| `npm run format`                      | Prettier                                                                                                                                       |
+| `npm test`                            | Vitest unit tests; database tests run when `DATABASE_URL` is set                                                                               |
+| `npm run test:watch`                  | Vitest in watch mode                                                                                                                           |
+| `npm run test:e2e`                    | Playwright on desktop and 375px mobile (first run: `npx playwright install chromium`)                                                          |
+| `npm run db:migrate -- --name <name>` | Create and apply a migration, then regenerate the Prisma client                                                                                |
+| `npm run db:deploy`                   | Apply existing migrations                                                                                                                      |
+| `npm run db:generate`                 | Regenerate the Prisma client                                                                                                                   |
+| `npm run db:studio`                   | Browse the database                                                                                                                            |
+| `npm run storage:cors`                | Let browsers upload to the bucket: sets its CORS, or checks it where the store manages CORS (Neon). `-- --create-bucket` for a local S3 server |
 
 ## Project structure
 
@@ -177,7 +177,7 @@ LamaLama is organised **by feature (vertical slices)**, not by layer.
 ```
 src/
 ├── app/        # thin routes only: read params, check auth, render features
-├── features/   # one folder per slice (auth, account, workspaces, ai-keys, brand-kits, footage, projects, exports)
+├── features/   # one folder per slice (auth, account, workspaces, ai-keys, brand-kits, footage, projects, exports, legal)
 │               # other code imports a slice only through its index.ts
 ├── remotion/   # video compositions, shared by the editor preview and the renderer
 ├── worker/     # the background job worker (pg-boss + ffmpeg + Remotion)
@@ -215,6 +215,8 @@ LamaLama runs as two Node processes:
 2. **The worker** — `npm run worker`. It runs ffmpeg and headless Chrome for renders, so give it a machine with a few GB of RAM.
 
 Both read the same environment variables, including the same `APP_ENCRYPTION_KEY`. Run `npm run db:deploy` on each release.
+
+The Privacy Policy, Terms and Cookie Policy (`/privacy`, `/terms`, `/cookies`) describe the hosted service at lamalama.video. If you run a public instance, you are the one responsible for it: rewrite them for your own service, starting from the facts in `src/features/legal/lib/legal.ts` (controller, contact email, cookies, providers).
 
 ## Remotion licence
 

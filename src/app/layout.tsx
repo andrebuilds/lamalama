@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next"
 
 import "@/shared/styles/globals.css"
+import { CookieNotice } from "@/features/legal"
 import { site } from "@/shared/config/site"
 import { cn } from "@/shared/lib/utils"
 import { Toaster } from "@/shared/ui/toast"
@@ -97,6 +98,7 @@ export default function RootLayout({
         <TooltipProvider>
           <Toaster>{children}</Toaster>
         </TooltipProvider>
+        <CookieNotice />
       </body>
     </html>
   )

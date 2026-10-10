@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Privacy Policy, Terms of Service and Cookie Policy pages (`/privacy`, `/terms`, `/cookies`), written for the GDPR and the EU Digital Services Act, linked from the footer, the sign-in and sign-up pages and the sitemap.
+- A cookie notice with a cookie-eating llama. LamaLama sets only technical cookies, so it informs and doesn't ask for consent.
+- `www.` redirects to the app's own domain.
+
+### Changed
+
+- The footer's author avatar loads through the app's image optimizer, so visitors' browsers no longer contact GitHub.
+- Daily limits per user, across all their workspaces, on new workspaces, invitations, clip uploads and exports (`userLimits` in `src/shared/config/limits.ts`).
+
+### Security
+
+- Next.js 16.3.8 and sharp 0.35.5, with the fixes for the image optimizer SSRF and cache poisoning advisories.
+- A GitHub sign-in links to an existing account only when GitHub has verified the email.
+- Sign-in links are limited per email address as well as per IP, and saving an AI key is limited per user.
+- Better Auth's raw `update-user` endpoint is off: the profile form is the only way to change your name.
+- HSTS and a `frame-ancestors` Content-Security-Policy; the app's own cookies are `Secure` on HTTPS.
+- Public share pages no longer use the clip's poster as preview image: it came from the raw recording, before blur and cuts.
+- ffmpeg reads uploads only as local MP4, MOV or WebM files.
+- AES-GCM decryption checks the full 16-byte auth tag.
+
 ## [0.1.0] - 2026-10-09
 
 ### Added

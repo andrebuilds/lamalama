@@ -41,4 +41,5 @@ Key facts:
 - [Security policy](https://github.com/andrebuilds/lamalama/blob/main/SECURITY.md)
 - [MIT License](https://github.com/andrebuilds/lamalama/blob/main/LICENSE)
 - [Remotion licence](https://www.remotion.dev/license)
+- [Terms of Service](https://lamalama.video/terms), [Privacy Policy](https://lamalama.video/privacy) and [Cookie Policy](https://lamalama.video/cookies)
 - Contact: hello@lamalama.video

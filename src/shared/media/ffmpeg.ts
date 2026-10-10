@@ -53,6 +53,18 @@ function run(
   })
 }
 
+/**
+ * Put before `-i` for files users uploaded: only a local file, only the
+ * containers we accept (MP4/MOV, WebM/Matroska). A file disguised as a
+ * playlist or concat script then can't make ffmpeg read other files or URLs.
+ */
+export const untrustedInputArgs = [
+  "-protocol_whitelist",
+  "file",
+  "-format_whitelist",
+  "mov,mp4,m4a,3gp,3g2,mj2,matroska,webm",
+]
+
 /** Runs ffmpeg (always non-interactive, overwriting outputs). */
 export function runFfmpeg(
   args: string[],
@@ -101,6 +113,7 @@ export async function probeVideo(
         "json",
         "-show_format",
         "-show_streams",
+        ...untrustedInputArgs,
         file,
       ],
       { timeoutMs: options.timeoutMs ?? 30_000, signal: options.signal }

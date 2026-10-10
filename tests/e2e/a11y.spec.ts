@@ -7,6 +7,9 @@ const publicPages = [
   "/sign-in",
   "/sign-up",
   "/sign-in?error=INVALID_TOKEN",
+  "/privacy",
+  "/terms",
+  "/cookies",
   "/this-page-does-not-exist",
 ]
 

@@ -24,3 +24,21 @@ export const aiLimits = {
   /** "Let AI choose" a graphic for a moment, per workspace per day. */
   graphicSuggestionsPerDay: 100,
 } as const
+
+/**
+ * Caps per user, across all their workspaces: workspace limits alone are
+ * dodged by creating more workspaces. They protect the shared worker, the
+ * bucket and the email domain from a single account.
+ */
+export const userLimits = {
+  /** Shared workspaces a user can create per day. */
+  workspacesPerDay: 5,
+  /** Clip uploads and recordings a user can start per day. */
+  clipUploadsPerDay: 100,
+  /** Exports a user can start per day. */
+  exportsPerDay: 50,
+  /** Invitation emails a user can send per day. */
+  invitesPerDay: 40,
+  /** API keys a user can check against Anthropic per hour. */
+  apiKeyChecksPerHour: 10,
+} as const

@@ -30,9 +30,7 @@ export async function generateMetadata({
     title: shared?.name ?? "Video not found",
     // Private links: never in search results.
     robots: { index: false, follow: false },
-    openGraph: shared?.posterUrl
-      ? { title: shared.name, images: [shared.posterUrl] }
-      : undefined,
+    openGraph: shared ? { title: shared.name } : undefined,
   }
 }
 

@@ -221,6 +221,11 @@ export function SignInCard({
               </Field>
             </FieldGroup>
           </form>
+          {/* Covers every sign-in method above, so it sits outside the form. */}
+          <FieldDescription className="text-center text-xs text-balance">
+            By continuing, you agree to the <Link href="/terms">Terms</Link> and
+            acknowledge the <Link href="/privacy">Privacy Policy</Link>.
+          </FieldDescription>
         </FieldGroup>
       </CardContent>
     </Card>

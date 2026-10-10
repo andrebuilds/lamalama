@@ -256,6 +256,7 @@ export async function getInvitation(token: string) {
       role: true,
       permissions: true,
       expiresAt: true,
+      invitedById: true,
       workspace: { select: { id: true, name: true } },
       invitedBy: { select: { name: true } },
     },
@@ -264,7 +265,8 @@ export async function getInvitation(token: string) {
 
 /**
  * Turns an invitation into a membership. The signed-in account's email must
- * match the invited address, so a forwarded link grants nothing.
+ * match the invited address, so a forwarded link grants nothing. Returns
+ * who sent it too, for the "accepted" email.
  */
 export async function acceptInvitation(
   token: string,
@@ -290,7 +292,7 @@ export async function acceptInvitation(
     )
   }
 
-  await db.$transaction([
+  const [, , inviter] = await db.$transaction([
     db.membership.upsert({
       where: {
         userId_workspaceId: {
@@ -307,8 +309,13 @@ export async function acceptInvitation(
       },
     }),
     db.invitation.delete({ where: { id: invitation.id } }),
+    // Not in getInvitation: the public invite page has no use for it.
+    db.user.findUniqueOrThrow({
+      where: { id: invitation.invitedById },
+      select: { name: true, email: true },
+    }),
   ])
-  return invitation.workspace
+  return { workspace: invitation.workspace, role: invitation.role, inviter }
 }
 
 /**

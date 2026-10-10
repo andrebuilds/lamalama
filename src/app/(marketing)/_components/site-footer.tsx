@@ -1,4 +1,6 @@
 import { MailIcon } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
 
 import { site } from "@/shared/config/site"
 import { cn } from "@/shared/lib/utils"
@@ -7,6 +9,12 @@ import { GitHubLink } from "@/shared/ui/github-link"
 import { Logo } from "@/shared/ui/logo"
 import { Separator } from "@/shared/ui/separator"
 import { ThemeToggle } from "@/shared/ui/theme-toggle"
+
+const legalLinks = [
+  { href: "/terms", label: "Terms" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/cookies", label: "Cookies" },
+] as const
 
 /**
  * Server component: pulls the author's GitHub profile so the footer shows
@@ -41,9 +49,9 @@ export async function SiteFooter() {
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 font-medium text-foreground underline-offset-4 hover:underline"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element -- tiny
-                  external avatar; not worth next/image remote config */}
-              <img
+              {/* Through next/image, so visitors' browsers never call
+                  GitHub: our server fetches the avatar. */}
+              <Image
                 src={avatar}
                 alt=""
                 width={20}
@@ -54,7 +62,22 @@ export async function SiteFooter() {
             </a>
           </span>
         </p>
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
+          <nav aria-label="Legal" className="flex items-center gap-3 pr-1.5">
+            {legalLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="underline-offset-4 hover:text-foreground hover:underline"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+          <Separator
+            orientation="vertical"
+            className="mx-1.5 data-vertical:h-4 data-vertical:self-auto"
+          />
           <GitHubLink />
           <Separator
             orientation="vertical"

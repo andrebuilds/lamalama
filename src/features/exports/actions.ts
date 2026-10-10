@@ -3,6 +3,7 @@
 import { unstable_rethrow } from "next/navigation"
 
 import { requireWorkspaceAccess } from "@/features/workspaces"
+import { userLimits } from "@/shared/config/limits"
 import { enqueue } from "@/shared/jobs"
 import { AppError } from "@/shared/lib/errors"
 import { err, ok, toResultError, type Result } from "@/shared/lib/result"
@@ -37,7 +38,7 @@ export async function startExport(
     const parsed = startExportSchema.safeParse(input)
     if (!parsed.success) throw invalid()
     const { target, shape } = parsed.data
-    const { workspace } = await requireWorkspaceAccess("render:start")
+    const { user, workspace } = await requireWorkspaceAccess("render:start")
     const render = await loadRenderInput(workspace.id, target, {
       linkSeconds: 60,
     })
@@ -54,6 +55,12 @@ export async function startExport(
         limit: dailyExports,
         windowSeconds: 24 * 60 * 60,
         message: `You’ve made ${dailyExports} exports today. Try again tomorrow.`,
+      })
+      await consumeRateLimit({
+        key: `exports-by-user:${user.id}`,
+        limit: userLimits.exportsPerDay,
+        windowSeconds: 24 * 60 * 60,
+        message: `You’ve made ${userLimits.exportsPerDay} exports today. Try again tomorrow.`,
       })
       const { id } = await service.createExport(
         workspace.id,

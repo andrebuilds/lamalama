@@ -37,7 +37,10 @@ export function decryptSecret(stored: string): string {
   const iv = raw.subarray(0, IV_LENGTH)
   const tag = raw.subarray(IV_LENGTH, IV_LENGTH + TAG_LENGTH)
   const ciphertext = raw.subarray(IV_LENGTH + TAG_LENGTH)
-  const decipher = createDecipheriv("aes-256-gcm", masterKey(), iv)
+  // A pinned tag length rejects truncated tags instead of checking fewer bytes.
+  const decipher = createDecipheriv("aes-256-gcm", masterKey(), iv, {
+    authTagLength: TAG_LENGTH,
+  })
   decipher.setAuthTag(tag)
   return Buffer.concat([
     decipher.update(ciphertext),

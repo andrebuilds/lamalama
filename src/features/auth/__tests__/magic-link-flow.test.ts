@@ -77,6 +77,19 @@ describe.runIf(hasDatabase)("magic link sign-in", () => {
     expect(user.emailVerified).toBe(true)
     expect(user.role).toBe("USER")
     expect(user.sessions).toHaveLength(1)
+
+    // The new account gets the welcome email, right after the link.
+    expect(sendEmail).toHaveBeenCalledTimes(2)
+    expect(sendEmail.mock.calls[1][0]).toMatchObject({
+      to: email,
+      subject: "Welcome to LamaLama",
+    })
+  })
+
+  it("sends the welcome email only once", async () => {
+    const link = await requestLink()
+    await verify(link)
+    expect(sendEmail).toHaveBeenCalledTimes(1)
   })
 
   it("stores the token hashed, never in plain text", async () => {
@@ -98,5 +111,20 @@ describe.runIf(hasDatabase)("magic link sign-in", () => {
     const location = new URL(second.headers.get("location")!, link)
     expect(location.pathname).toBe("/sign-in")
     expect(location.searchParams.get("error")).toBe("INVALID_TOKEN")
+  })
+
+  it("stops sending links to one address after 5 in an hour", async () => {
+    const flooded = `magic-link-flood-${randomUUID()}@example.com`
+    const request = () =>
+      auth.api.signInMagicLink({
+        body: { email: flooded, callbackURL: "/dashboard" },
+        headers: new Headers(),
+      })
+    for (let i = 0; i < 5; i++) await request()
+
+    await expect(request()).rejects.toMatchObject({
+      status: "TOO_MANY_REQUESTS",
+    })
+    expect(sendEmail).toHaveBeenCalledTimes(5)
   })
 })

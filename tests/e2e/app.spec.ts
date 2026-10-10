@@ -73,6 +73,34 @@ test("editing your name updates it everywhere", async ({
   expect(consoleProblems).toEqual([])
 })
 
+test("a picked mascot shows in the user menu without a reload", async ({
+  page,
+  signedInUser,
+  consoleProblems,
+}, testInfo) => {
+  // A real sign-in also leaves the session cache cookie (5 minutes), which
+  // still holds the user without a mascot. The fixture only sets the token.
+  await page.request.get("/api/auth/get-session")
+  await page.goto("/settings/profile")
+
+  await page.getByRole("radio", { name: "DJ" }).check({ force: true })
+  await expect(page.getByText("Mascot saved")).toBeVisible()
+
+  // Same page, no navigation: the layout must pick up the new session.
+  if (isMobile(testInfo.project.name)) {
+    await page.getByRole("button", { name: "Toggle Sidebar" }).click()
+  }
+  await page
+    .locator('[data-slot="sidebar"]')
+    .last()
+    .getByRole("button", { name: new RegExp(signedInUser.email) })
+    .click()
+  await expect(
+    page.getByRole("menu").getByRole("img", { name: "DJ llama" })
+  ).toBeVisible()
+  expect(consoleProblems).toEqual([])
+})
+
 test("an empty name shows an error and keeps what you typed", async ({
   page,
   signedInUser: _user,

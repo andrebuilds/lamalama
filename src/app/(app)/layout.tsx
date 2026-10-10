@@ -45,11 +45,12 @@ export default async function AppLayout({
   // BYOK soft gate: fresh accounts see /welcome once; after skipping, the
   // banner below keeps pointing at settings until a key is saved. The gate
   // looks at the saved key only, so the dev env fallback doesn't hide it.
+  // The skip cookie counts only for the user who set it.
   const [savedKey, aiReady] = await Promise.all([
     getKeyStatus(workspace.id),
     hasAiKey(workspace.id),
   ])
-  if (!savedKey && jar.get(BYOK_WELCOME_COOKIE)?.value !== "1") {
+  if (!savedKey && jar.get(BYOK_WELCOME_COOKIE)?.value !== user.id) {
     redirect("/welcome")
   }
 
