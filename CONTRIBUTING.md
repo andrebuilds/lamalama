@@ -49,7 +49,7 @@ You need Node.js 22+, a Postgres database and an S3-compatible bucket. The READM
    ```
 2. Make your change, with tests. New behaviour needs a test; a bug fix needs a test that failed before the fix.
 3. Database changes need a migration: `npm run db:migrate -- --name <name>`.
-4. Run the checks locally (CI runs the same ones):
+4. Run the checks locally (CI runs all of them except the e2e tests):
    ```bash
    npm run lint
    npm run typecheck

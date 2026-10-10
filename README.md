@@ -194,7 +194,7 @@ Add shadcn components with `npx shadcn@latest add <name>` — they land in `src/
 
 - **Unit and integration** (`npm test`): services, schemas, actions and the real magic-link flow. Tests that need a database run against `DATABASE_URL`.
 - **End to end** (`npm run test:e2e`): pages, signed-in flows, accessibility (axe, WCAG 2.2 A/AA) and keyboard use. Signed-in tests create a throwaway user and delete it afterwards; they skip when `DATABASE_URL_UNPOOLED` isn't set.
-- **CI** (GitHub Actions): lint, types, formatting, unit, build and e2e on every push and pull request, against a fresh `postgres:17` container and a local SeaweedFS S3 server. No external accounts needed.
+- **CI** (GitHub Actions): lint, types, formatting, unit and build on every push and pull request, against a fresh `postgres:17` container and a local SeaweedFS S3 server. No external accounts needed. End-to-end tests run locally only.
 
 ### Database migrations from a non-interactive shell
 
