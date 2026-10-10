@@ -20,6 +20,12 @@ const securityHeaders = [
   },
 ]
 
+// The app's own host. www.<host> redirects to it: one canonical address
+// for search engines and one set of auth cookies.
+const appHost = new URL(
+  process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+).hostname
+
 const nextConfig: NextConfig = {
   devIndicators: false,
   // Don't advertise the framework in an X-Powered-By header.
@@ -33,6 +39,19 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }]
+  },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        // `value` is a regex: escape the dots.
+        has: [
+          { type: "host", value: `www\\.${appHost.replaceAll(".", "\\.")}` },
+        ],
+        destination: `https://${appHost}/:path*`,
+        permanent: true,
+      },
+    ]
   },
 }
 
