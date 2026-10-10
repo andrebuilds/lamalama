@@ -41,10 +41,7 @@ export function InvitationAcceptedEmail({
             {memberName} accepted your invitation and is now part of the
             workspace “{workspaceName}” as {roleText[role]}.
           </Text>
-          <Button
-            href={`${site.url}/settings/workspace`}
-            style={styles.button}
-          >
+          <Button href={`${site.url}/settings/workspace`} style={styles.button}>
             Manage members
           </Button>
           <Hr style={styles.hr} />
