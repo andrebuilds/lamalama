@@ -11,11 +11,12 @@
 An open-source, in-browser video editor for product videos. Record or upload your app,
 let the AI direct the first cut, polish it in a real editor, then export an MP4 or share a link.
 
-[Website](https://lamalama.video) · [Report a bug](https://github.com/andrebuilds/lamalama/issues/new?template=bug_report.yml) · [Request a feature](https://github.com/andrebuilds/lamalama/issues/new?template=feature_request.yml) · [Contributing](CONTRIBUTING.md)
+[Website](https://lamalama.video) · [Report a bug](https://github.com/andrebuilds/lamalama/issues/new?template=bug_report.yml) · [Request a feature](https://github.com/andrebuilds/lamalama/issues/new?template=feature_request.yml) · [Contributing](CONTRIBUTING.md) · [Sponsor](https://github.com/sponsors/andrebuilds)
 
 [![CI](https://github.com/andrebuilds/lamalama/actions/workflows/ci.yml/badge.svg)](https://github.com/andrebuilds/lamalama/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Sponsor](https://img.shields.io/github/sponsors/andrebuilds?label=Sponsor&logo=GitHub-Sponsors&color=ea4aaa)](https://github.com/sponsors/andrebuilds)
 
 <br>
 
@@ -227,6 +228,10 @@ LamaLama's own code is MIT-licensed, but video rendering uses [Remotion](https:/
 Contributions are welcome — bug reports, ideas, docs and code. Please read [CONTRIBUTING.md](CONTRIBUTING.md) first, and note that this project follows a [Code of Conduct](CODE_OF_CONDUCT.md).
 
 Found a security issue? Please **don't** open a public issue — see [SECURITY.md](SECURITY.md).
+
+## Support the project
+
+LamaLama is free and open source. If it saves you time, you can support its development through [GitHub Sponsors](https://github.com/sponsors/andrebuilds) — every contribution helps keep the llamas running.
 
 ## Author
 
